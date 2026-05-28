@@ -1,5 +1,0 @@
-{
-  "buildCommand": "cd ui-control-center && npm install && npm run build",
-  "outputDirectory": "ui-control-center/out",
-  "installCommand": "cd ui-control-center && npm install"
-}
