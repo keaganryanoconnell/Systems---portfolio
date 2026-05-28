@@ -1,0 +1,76 @@
+# ==============================================================================
+# Enterprise-Grade Cargo Deny Configuration (deny.toml)
+# ==============================================================================
+# Configures security, vulnerability, licensing, and lockfile constraints
+# for our unified multi-crate Cargo workspace.
+# ==============================================================================
+
+[advisories]
+# Schema version: use v2 for the updated RustSec Advisory DB format.
+version = 2
+# Cross-reference dependencies against the RustSec Advisory Database
+db-url = "https://github.com/rustsec/advisory-db"
+db-path = "~/.cargo/advisory-db"
+# Fail the build if any vulnerability advisory is detected
+vulnerability = "deny"
+# Emit compiler warnings for unmaintained dependencies
+unmaintained = "warn"
+# Fail the build if unsound dependency patterns are detected
+unsound = "deny"
+# Ignore specific advisory IDs (left empty for strict compliance)
+ignore = []
+
+[licenses]
+# Fail the build for packages that do not declare a license
+unlicensed = "deny"
+# Enable strict licensing validation rules
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "CC0-1.0",
+    "OpenSSL",
+    "Unicode-3.0",
+    "Zlib",
+]
+# Explicitly block copyleft licenses to prevent intellectual property leakage
+deny = [
+    "GPL-1.0-only", "GPL-1.0-or-later",
+    "GPL-2.0-only", "GPL-2.0-or-later",
+    "GPL-3.0-only", "GPL-3.0-or-later",
+    "AGPL-1.0-only", "AGPL-1.0-or-later",
+    "AGPL-3.0-only", "AGPL-3.0-or-later",
+    "LGPL-2.0-only", "LGPL-2.0-or-later",
+    "LGPL-2.1-only", "LGPL-2.1-or-later",
+    "LGPL-3.0-only", "LGPL-3.0-or-later",
+]
+# Warn about licenses that require manual review (e.g. proprietary or custom)
+copyleft = "deny"
+# How to resolve multi-license declarations (e.g. OR / AND logic)
+exceptions = []
+
+# No clarify overrides required: cargo-deny v2 resolves composite license
+# expressions (e.g. ring's OpenSSL AND ISC AND BSD-4-Clause) automatically
+# via SPDX expression parsing without needing hardcoded file hashes.
+
+[bans]
+# Fail compilation if multiple versions of the same dependency are detected in tree (duplicates check)
+multiple-versions = "warn"
+# Explicitly ban specific unsafe crates
+deny = []
+# Skip checks for specific crates (left empty for strict zero-trust)
+skip = []
+# Allow duplicate version check bypass for specific transitives if necessary
+skip-tree = []
+
+[sources]
+# Enforce lockfile cryptographic integrity and check registry indexes
+unknown-registry = "deny"
+unknown-git = "deny"
+# Restrict package downloads exclusively to official crates.io registry
+allow-registry = [
+    "https://github.com/rust-lang/crates.io-index"
+]
+allow-git = []

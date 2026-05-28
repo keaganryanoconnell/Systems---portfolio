@@ -1,0 +1,13 @@
+[package]
+name = "log-broker"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Real-time distributed log and pub-sub broker — segmented append-only log, lock-free ring buffers, binary TCP framing protocol, consumer cursor state engine"
+
+[dependencies]
+mio = { version = "1", features = ["os-poll", "net"] }
+parking_lot = "0.12"
+
+[dev-dependencies]
+tempfile = "3"

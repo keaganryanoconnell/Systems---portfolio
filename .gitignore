@@ -1,0 +1,40 @@
+# Rust / Cargo
+/target/
+**/*.rs.bk
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.env*.local
+.env
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Tauri
+/src-tauri/target/
+
+# Build artifacts and temp files
+*.zip
+dev-server.log
+serve.js
+start-server.bat
+.cache/
+Project
+--url
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS Files
+Thumbs.db
+.db
+.DS_Store

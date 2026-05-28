@@ -1,0 +1,4 @@
+# Redirect the Cargo build target directory to prevent OneDrive sync engine
+# from locking compiler output files during rapid compilation cycles.
+[build]
+target-dir = "C:/Users/keaga/.cargo/target-main-project-app"

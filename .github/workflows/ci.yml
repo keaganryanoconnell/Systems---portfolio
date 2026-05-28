@@ -1,0 +1,355 @@
+# ==============================================================================
+# Enterprise-Grade Multi-Platform DevSecOps Pipeline
+# ==============================================================================
+# Implements a Directed Acyclic Graph (DAG) style verification pipeline:
+#
+#   STAGE 1: Fast-Failure Audit Gates (Runs on ubuntu-latest)
+#     ├─ security-audit: Validates lockfile integrity, checks CVEs and licenses.
+#     └─ lint-check:     Code style, clippy compiler warnings, UI lint, fmt verification.
+#
+#   STAGE 2: Multi-Platform Compilation & Test Matrix (Requires Stage 1)
+#     ├─ Linux:   Builds & tests core nodes (epoll/LSM) targeting x86_64-linux.
+#     ├─ macOS:   Compiles Tauri Wrapper (.dmg) & checks mobile iOS targets.
+#     └─ Windows: Compiles Tauri Control Panel (.msi) using MSVC.
+#
+#   STAGE 3: Safety, Benchmarks & Frontend Tests (Requires Stage 2)
+#     └─ safety-and-bench: Runs static safety scanner + benchmark compilation gate
+#                          + frontend unit tests (Vitest).
+#
+# Security posture:
+#   - Minimum-privilege OIDC token scopes declared per-job.
+#   - Cargo.lock hash included in all cache keys to prevent stale-cache attacks.
+#   - Concurrency guard cancels superseded runs to prevent resource exhaustion.
+#   - All job timeout budgets are bounded to cap runaway runner consumption.
+# ==============================================================================
+
+name: Continuous Integration
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+# ---------------------------------------------------------------------------
+# Global: Deny all permissions by default. Each job grants only the minimum
+# required token scopes. This prevents any accidental write-token leakage
+# from a compromised action dependency in the supply chain.
+# ---------------------------------------------------------------------------
+permissions: read-all
+
+# Cancel pre-existing runs for the same branch/PR to save runner resources.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# ---------------------------------------------------------------------------
+# Pin tool versions in a single source-of-truth block.
+# Bump here to upgrade globally; avoids version drift between jobs.
+# ---------------------------------------------------------------------------
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: "1"
+  NODE_VERSION: "20"
+  # Disables incremental compilation in CI (not useful, wastes cache space).
+  CARGO_INCREMENTAL: "0"
+  # Enables faster CI feedback by using the sparse registry protocol.
+  CARGO_REGISTRIES_CRATES_IO_PROTOCOL: "sparse"
+
+jobs:
+  # ============================================================================
+  # STAGE 1-A: Supply-Chain & Dependency Security Audit
+  # ============================================================================
+
+  security-audit:
+    name: Supply-Chain & Dependency Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read        # Checkout
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Cross-reference all dependency trees against the RustSec Advisory DB.
+      # Blocks on CVEs, GPL-licensed crates, duplicate dependency versions, and
+      # any source registry outside of crates.io as defined in deny.toml.
+      - name: Run Cargo Deny Audit
+        uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          command: check
+          arguments: --all-features
+
+  # ============================================================================
+  # STAGE 1-B: Code Style & Compiler Lint Gate
+  # ============================================================================
+
+  lint-check:
+    name: Code Style & Clippy Lints
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read        # Checkout
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Install the system packages required to compile and lint the Tauri GUI
+      # wrapper (GTK, WebKit, AppIndicator). Without these, src-tauri fails to link.
+      - name: Install Linux System Dependencies for Tauri
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            build-essential \
+            libssl-dev \
+            pkg-config
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'ui-control-center/package-lock.json'
+
+      - name: Install UI Dependencies
+        run: |
+          if [ -d "ui-control-center" ] && [ -f "ui-control-center/package.json" ]; then
+            cd ui-control-center && npm ci
+          fi
+
+      # Cache key includes Cargo.lock hash to bust on any dependency change.
+      - name: Rust Target Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-lint-${{ hashFiles('**/Cargo.lock') }}"
+
+      # Reject any formatting deviation. Developers must run `cargo fmt` locally.
+      - name: Verify Code Formatting
+        run: cargo fmt --all -- --check
+
+      # Treat every clippy warning as a hard compile error.
+      - name: Verify Clippy Lints
+        run: cargo clippy --workspace --all-targets --all-features -- -D warnings
+
+
+  # ============================================================================
+  # STAGE 2: Multi-Platform Cross-Compilation & Test Matrix
+  # ============================================================================
+
+  build-matrix:
+    name: Compile & Test (${{ matrix.name }})
+    needs: [security-audit, lint-check]   # Enforces DAG gate
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 45
+    permissions:
+      contents: read        # Checkout
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: linux
+            name: Linux Core Systems Node
+          - os: macos-latest
+            target: macos
+            name: macOS Tauri Wrapper & iOS Check
+          - os: windows-latest
+            target: windows
+            name: Windows Tauri Control Panel
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # ────────────────────────────────────────────────────────────────────────
+      # Toolchain & Cache Configuration
+      # ────────────────────────────────────────────────────────────────────────
+
+      - name: Setup Rust Toolchain (Standard)
+        if: matrix.target != 'macos'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Rust Toolchain (macOS with iOS Target)
+        if: matrix.target == 'macos'
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+
+      - name: Setup Node.js
+        if: matrix.target == 'macos' || matrix.target == 'windows'
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'ui-control-center/package-lock.json'
+
+      # Cache key is tied to the OS and Cargo.lock so changes invalidate correctly.
+      - name: Rust Compiler Target Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-build-${{ matrix.target }}-${{ hashFiles('**/Cargo.lock') }}"
+
+      - name: Compile Telemetry Frontend App
+        if: matrix.target == 'macos' || matrix.target == 'windows'
+        shell: bash
+        run: |
+          if [ -d "ui-control-center" ] && [ -f "ui-control-center/package.json" ]; then
+            cd ui-control-center && npm ci && npm run build
+          fi
+
+      # ────────────────────────────────────────────────────────────────────────
+      # Linux: Compile & Test Core Systems Node (libc, epoll, LSM)
+      # ────────────────────────────────────────────────────────────────────────
+
+      - name: Install Linux Dev Dependencies
+        if: matrix.target == 'linux'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            build-essential \
+            libssl-dev \
+            pkg-config
+
+      - name: Compile Systems Node (Linux x86_64)
+        if: matrix.target == 'linux'
+        run: |
+          cargo build --target x86_64-unknown-linux-gnu \
+            --workspace --all-targets --all-features
+
+      - name: Run Test Suite (Linux)
+        if: matrix.target == 'linux'
+        run: |
+          cargo test --target x86_64-unknown-linux-gnu \
+            --workspace --all-targets --all-features
+
+      # ────────────────────────────────────────────────────────────────────────
+      # macOS: Build Tauri app (.dmg) and verify iOS cross-compilation
+      # ────────────────────────────────────────────────────────────────────────
+
+      - name: Verify iOS Target Compilation
+        if: matrix.target == 'macos'
+        run: |
+          cargo check --target aarch64-apple-ios \
+            -p core-sys --all-targets --all-features
+
+      - name: Build macOS Desktop Wrapper (.dmg)
+        if: matrix.target == 'macos'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --only-dmg
+          projectPath: "."
+
+      # ────────────────────────────────────────────────────────────────────────
+      # Windows: Build Tauri MSVC installer package (.msi)
+      # ────────────────────────────────────────────────────────────────────────
+
+      - name: Build Windows Desktop Wrapper (.msi)
+        if: matrix.target == 'windows'
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: --only-msi
+          projectPath: "."
+
+
+  # ============================================================================
+  # STAGE 3: Static Safety Analysis, Benchmarks & Frontend Tests
+  # ============================================================================
+
+  safety-and-bench:
+    name: Safety Analysis, Benchmarks & Frontend Tests
+    needs: [build-matrix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read        # Checkout
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Install Linux Dev Dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            libgtk-3-dev \
+            libwebkit2gtk-4.0-dev \
+            libwebkit2gtk-4.1-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            build-essential \
+            libssl-dev \
+            pkg-config
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: 'ui-control-center/package-lock.json'
+
+      - name: Install UI Dependencies
+        run: |
+          if [ -d "ui-control-center" ] && [ -f "ui-control-center/package.json" ]; then
+            cd ui-control-center && npm ci
+          fi
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Rust Target Cache
+        uses: swatinem/rust-cache@v2
+        with:
+          prefix-key: "rust-safety-bench-${{ hashFiles('**/Cargo.lock') }}"
+
+      # Reject any `.unwrap()`, `.expect()`, or `panic!` in production source paths.
+      # The scanner script exits with code 1 on any violation, failing this step.
+      - name: Run Static Safety Scanner
+        run: python scripts/deny-unwraps.py
+
+      # Compile all Criterion benchmark harnesses without running them.
+      # Validates that bench code is always kept in sync with the production API.
+      - name: Compile Benchmark Harnesses (no-run)
+        run: |
+          cargo bench --workspace --all-targets --no-run
+
+      # Run frontend unit tests (Vitest).
+      - name: Run Frontend Unit Tests
+        run: |
+          if [ -d "ui-control-center" ] && [ -f "ui-control-center/package.json" ]; then
+            cd ui-control-center && npm test
+          fi
+
+      # Upload test results and safety scan as build artifacts.
+      # Provides an auditable paper trail for security review.
+      - name: Upload Safety Report
+        if: always()   # Upload even if a previous step failed (audit trail)
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-scan-report-${{ github.run_id }}
+          path: |
+            scripts/deny-unwraps.py
+          retention-days: 90

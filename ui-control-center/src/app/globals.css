@@ -1,0 +1,213 @@
+@import "tailwindcss";
+
+@theme {
+  /* ── Base (Server Room) ── */
+  --color-bg:        #090c10;
+  --color-surface:   #13161d;
+  --color-elevated:  #1a1e27;
+  --color-border:    #252a36;
+  --color-border-hover: #303745;
+
+  /* ── Text ── */
+  --color-text:      #e1e4ea;
+  --color-text-soft: #8b919e;
+  --color-text-muted:#5c6270;
+
+  /* ── Gold (accent, headers, active) ── */
+  --color-gold:      #d2991d;
+  --color-gold-bg:   rgba(210, 153, 29, 0.08);
+  --color-gold-border: rgba(210, 153, 29, 0.25);
+
+  /* ── Blue (links, interactive) ── */
+  --color-blue:      #58a6ff;
+  --color-blue-bg:   rgba(88, 166, 255, 0.08);
+  --color-blue-border: rgba(88, 166, 255, 0.25);
+
+  /* ── Green (healthy / success) ── */
+  --color-green:     #3fb950;
+  --color-green-bg:  rgba(63, 185, 80, 0.08);
+  --color-green-border: rgba(63, 185, 80, 0.25);
+
+  /* ── Red (error / offline) ── */
+  --color-red:       #f85149;
+  --color-red-bg:    rgba(248, 81, 73, 0.08);
+  --color-red-border: rgba(248, 81, 73, 0.25);
+
+  /* ── Purple (secondary) ── */
+  --color-purple:    #8b5cf6;
+  --color-purple-bg: rgba(139, 92, 246, 0.08);
+  --color-purple-border: rgba(139, 92, 246, 0.25);
+
+  /* ── Status ── */
+  --color-success: #3fb950;
+  --color-success-bg: rgba(63, 185, 80, 0.08);
+  --color-success-border: rgba(63, 185, 80, 0.25);
+  --color-warning: #d2991d;
+  --color-warning-bg: rgba(210, 153, 29, 0.08);
+  --color-warning-border: rgba(210, 153, 29, 0.25);
+  --color-danger: #f85149;
+  --color-danger-bg: rgba(248, 81, 73, 0.08);
+  --color-danger-border: rgba(248, 81, 73, 0.25);
+  --color-info: #58a6ff;
+  --color-info-bg: rgba(88, 166, 255, 0.08);
+  --color-info-border: rgba(88, 166, 255, 0.25);
+
+  /* ── Typography ── */
+  --font-mono: 'JetBrains Mono', ui-monospace, Consolas, monospace;
+  --font-sans: 'Geist Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+:root {
+  --background: #090c10;
+  --foreground: #e1e4ea;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 64px;
+}
+
+body {
+  color: #e1e4ea;
+  background: #090c10;
+  font-family: 'Geist Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #08090c; }
+::-webkit-scrollbar-thumb { background: #1a1e27; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #5c6270; }
+
+/* ── Section spacing ── */
+.section {
+  padding: 112px 24px;
+  max-width: 1240px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .section { padding: 72px 16px; }
+}
+
+/* ── Panel / Card (Glassmorphism & Neon Borders) ── */
+.cyber-panel {
+  background: rgba(16, 20, 28, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cyber-panel:hover {
+  border-color: rgba(210, 153, 29, 0.3);
+  box-shadow: 
+    0 20px 40px -15px rgba(0, 0, 0, 0.8),
+    0 0 20px -3px rgba(210, 153, 29, 0.04);
+  transform: translateY(-2px);
+}
+
+/* ── Gold accent text ── */
+.text-accent { color: #d2991d; }
+
+/* ── Section heading ── */
+.section-heading {
+  font-size: 11px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  color: #d2991d;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.section-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: #e1e4ea;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  margin-bottom: 24px;
+}
+
+@media (min-width: 768px) {
+  .section-title { font-size: 42px; }
+}
+
+/* ── Badge / Tag ── */
+.tag {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 600;
+  border-radius: 6px;
+  background: rgba(88, 166, 255, 0.05);
+  color: #58a6ff;
+  border: 1px solid rgba(88, 166, 255, 0.15);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.tag:hover {
+  background: rgba(88, 166, 255, 0.12);
+  border-color: rgba(88, 166, 255, 0.4);
+  transform: translateY(-1px);
+}
+
+/* ── Divider ── */
+hr {
+  border: none;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  margin: 48px 0;
+}
+
+/* ── Link ── */
+a { color: #58a6ff; text-decoration: none; transition: color 0.15s; }
+a:hover { color: #79b8ff; }
+
+/* ── xterm ── */
+.xterm {
+  padding: 12px;
+  border-radius: 6px;
+  background: #06070a !important;
+}
+.xterm-viewport::-webkit-scrollbar-thumb { background: rgba(88, 166, 255, 0.2); border-radius: 3px; }
+
+/* ── Gradient border (for hero / special cards) ── */
+.gradient-border {
+  border: 1px solid transparent;
+  background: linear-gradient(#10141c, #10141c) padding-box,
+              linear-gradient(135deg, #d2991d, #58a6ff) border-box;
+}
+
+/* ── Grid background ── */
+.grid-bg {
+  background-size: 50px 50px;
+  background-image:
+    linear-gradient(to right, rgba(88, 166, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(88, 166, 255, 0.015) 1px, transparent 1px);
+}
+
+/* ── Animations ── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+.animate-pulse-subtle { animation: pulse-subtle 2.5s ease-in-out infinite; }
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.animate-blink { animation: blink 1s step-end infinite; }
+

@@ -1,0 +1,52 @@
+{
+  "build": {
+    "distDir": "../ui-control-center/out",
+    "devPath": "http://localhost:3000",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "package": {
+    "productName": "ControlCenter",
+    "version": "0.1.0"
+  },
+  "tauri": {
+    "allowlist": {
+      "all": true
+    },
+    "bundle": {
+      "active": true,
+      "category": "DeveloperTool",
+      "copyright": "",
+      "deb": {
+        "depends": []
+      },
+      "externalBin": [],
+      "icon": [
+        "icons/32x32.png",
+        "icons/128x128.png",
+        "icons/128x128@2x.png",
+        "icons/icon.icns",
+        "icons/icon.ico"
+      ],
+      "identifier": "com.controlcenter.app",
+      "longDescription": "",
+      "macOS": {},
+      "resources": [],
+      "shortDescription": "",
+      "targets": "all",
+      "windows": {}
+    },
+    "security": {
+      "csp": null
+    },
+    "windows": [
+      {
+        "fullscreen": false,
+        "height": 768,
+        "resizable": true,
+        "title": "Control Center - Telemetry Dashboard",
+        "width": 1024
+      }
+    ]
+  }
+}
