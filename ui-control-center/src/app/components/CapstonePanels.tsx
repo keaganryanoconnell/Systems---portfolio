@@ -10,6 +10,7 @@ import ProjectCards from "./ProjectCards";
 import { Play, Database, Download } from "lucide-react";
 import BenchmarkDashboard from "./BenchmarkDashboard";
 import PipelineView from "./PipelineView";
+import { useWorkerEngine } from "./EngineWorkerProvider";
 
 function ViewportCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -180,12 +181,13 @@ function QueryPanel() {
   );
 }
 
-export default function CapstonePanels() {
+export default function CapstonePanels({ workerMode }: { workerMode: "sim" | "live" }) {
+  const { heapUsed: ctxHeapUsed, heapMax: ctxHeapMax, workerStates } = useWorkerEngine();
   const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench" | "memory" | "deploy">("stack");
   const [selectedCrate, setSelectedCrate] = useState<string | null>(null);
 
-  const [heapUsed, setHeapUsed] = useState(180 * 1024 * 1024);
   const heapMax = 256;
+  const [heapUsed, setHeapUsed] = useState(180 * 1024 * 1024);
   const [evictions, setEvictions] = useState(47);
   const [frameHistory, setFrameHistory] = useState<number[]>(Array.from({length:60}, () => 15+Math.random()*3));
   const [fps, setFps] = useState(60);
@@ -272,7 +274,7 @@ export default function CapstonePanels() {
         </button>
         <span className="flex-1" />
         <span className="text-[8px] font-mono text-text-muted">
-          17 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
+          18 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
         </span>
       </div>
 
@@ -302,8 +304,11 @@ export default function CapstonePanels() {
               </div>
               <div className="bg-surface/30 rounded-lg border border-border p-3">
                 <EngineTelemetry
-                  heapUsed={heapUsed} heapMax={heapMax} evictions={evictions}
-                  frameHistory={frameHistory} fps={fps} workers={workers}
+                  heapUsed={workerMode === "live" ? ctxHeapUsed : heapUsed}
+                  heapMax={heapMax}
+                  evictions={evictions}
+                  frameHistory={frameHistory} fps={fps}
+                  workers={workerMode === "live" ? workerStates : workers}
                   queryLatencies={queryLatencies}
                 />
               </div>

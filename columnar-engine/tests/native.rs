@@ -55,19 +55,15 @@ fn test_lru_eviction_order() {
     let mut manager = EngineMemoryManager::new(15);
     let test_block = build_test_block(500);
 
-    let mut chunk0_id = 0u32;
-    let mut chunk1_id = 0u32;
-
-    {
-        let c = manager.alloc_chunk().unwrap();
-        chunk0_id = c.chunk_id;
-        unsafe { ingest_raw_block(c, &test_block).unwrap(); }
-    }
-    {
-        let c = manager.alloc_chunk().unwrap();
-        chunk1_id = c.chunk_id;
-        unsafe { ingest_raw_block(c, &test_block).unwrap(); }
-    }
+    let (chunk0_id, _) = {
+        let c0 = manager.alloc_chunk().unwrap();
+        let id0 = c0.chunk_id;
+        unsafe { ingest_raw_block(c0, &test_block).unwrap(); }
+        let c1 = manager.alloc_chunk().unwrap();
+        let id1 = c1.chunk_id;
+        unsafe { ingest_raw_block(c1, &test_block).unwrap(); }
+        (id0, id1)
+    };
 
     manager.touch_chunk(chunk0_id);
 

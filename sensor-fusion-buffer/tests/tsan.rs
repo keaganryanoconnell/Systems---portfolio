@@ -17,7 +17,7 @@ fn test_tsan_3_producers_1_consumer_no_data_races() {
 
     for pid in 0..3 {
         let buf = buffer.clone();
-        let run = running.clone();
+        let _run = running.clone();
         let h = thread::spawn(move || {
             for seq in 0..FRAMES_PER_PRODUCER {
                 let frame = SensorFrame::new_imu(

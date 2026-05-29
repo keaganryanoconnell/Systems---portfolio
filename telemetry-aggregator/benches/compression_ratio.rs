@@ -31,7 +31,7 @@ fn bench_compress_128_point_block(c: &mut Criterion) {
 
         b.iter(|| {
             let result = GorillaCompressor::decompress_block(black_box(&compressed), 128);
-            black_box(result);
+            let _ = black_box(result);
         });
     });
 
@@ -47,7 +47,7 @@ fn bench_parse_packets(c: &mut Criterion) {
     group.bench_function("parse_100_packets", |b| {
         b.iter(|| {
             let result = parse_coap_payload(black_box(&sample));
-            black_box(result);
+            let _ = black_box(result);
         });
     });
 

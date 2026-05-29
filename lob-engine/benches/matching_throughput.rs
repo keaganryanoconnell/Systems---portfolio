@@ -1,7 +1,7 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use std::time::Instant;
 
-use lob_engine::{LatencyStats, OrderBook, OrderPool, OrderRequest, OrderSide, RingBuffer};
+use lob_engine::{LatencyStats, OrderBook, OrderPool, OrderRequest, OrderSide};
 
 fn generate_orders(count: usize) -> Vec<OrderRequest> {
     let mut orders = Vec::with_capacity(count);

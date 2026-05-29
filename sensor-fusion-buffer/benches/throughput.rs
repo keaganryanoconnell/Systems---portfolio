@@ -19,7 +19,7 @@ fn bench_multi_producer_throughput(c: &mut Criterion) {
 
             for pid in 0..3 {
                 let buf = buffer.clone();
-                let run = running.clone();
+                let _run = running.clone();
                 handles.push(thread::spawn(move || {
                     for seq in 0..10_000u64 {
                         let frame = SensorFrame::new_imu(pid, seq * 1000, seq, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0);

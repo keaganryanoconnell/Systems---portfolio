@@ -158,7 +158,7 @@ mod tests {
         let snapshot = a.clone();
 
         for _ in 0..100 {
-            let mut copy = snapshot.clone();
+            let copy = snapshot.clone();
             a.merge(&copy);
         }
 

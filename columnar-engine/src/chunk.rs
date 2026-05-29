@@ -1,10 +1,10 @@
 use crate::error::EngineResult;
 
 pub const CHUNK_ROWS: usize = 65536;
-const TIMESTAMPS_SIZE: usize = CHUNK_ROWS * 8;
-const LATITUDES_SIZE: usize  = CHUNK_ROWS * 4;
-const LONGITUDES_SIZE: usize = CHUNK_ROWS * 4;
-const ENTITY_IDS_SIZE: usize = CHUNK_ROWS * 4;
+const _TIMESTAMPS_SIZE: usize = CHUNK_ROWS * 8;
+const _LATITUDES_SIZE: usize  = CHUNK_ROWS * 4;
+const _LONGITUDES_SIZE: usize = CHUNK_ROWS * 4;
+const _ENTITY_IDS_SIZE: usize = CHUNK_ROWS * 4;
 
 pub struct ColumnarChunk {
     pub timestamps: Vec<f64>,
