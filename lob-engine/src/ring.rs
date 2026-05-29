@@ -19,7 +19,15 @@ impl<T, const N: usize> RingBuffer<T, N> {
             mask: N - 1,
         }
     }
+}
 
+impl<T, const N: usize> Default for RingBuffer<T, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T, const N: usize> RingBuffer<T, N> {
     pub fn available(&self) -> usize {
         let head = self.head.load(Ordering::Acquire);
         let tail = self.tail.load(Ordering::Relaxed);

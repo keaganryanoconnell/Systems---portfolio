@@ -137,7 +137,7 @@ impl<'a> BitReader<'a> {
             }
             value
         } else {
-            let first_part = (self.words[self.word_idx] & ((1u64 << remaining) - 1)) as u64;
+            let first_part = self.words[self.word_idx] & ((1u64 << remaining) - 1);
             self.word_idx += 1;
             self.bits_consumed = 0;
             let second_bits = num_bits - remaining;

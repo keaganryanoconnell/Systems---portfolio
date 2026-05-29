@@ -43,7 +43,15 @@ impl PacketRing {
             read_idx: AtomicUsize::new(0),
         }
     }
+}
 
+impl Default for PacketRing {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl PacketRing {
     pub fn has_available(&self) -> bool {
         let idx = self.read_idx.load(Ordering::Relaxed);
         self.frames[idx].ready.load(Ordering::Acquire)
@@ -82,8 +90,8 @@ impl PacketRing {
         loop {
             if !self.frames[idx].ready.load(Ordering::Acquire) {
                 let data_ptr = self.frames[idx].data.get();
-                unsafe { (data_ptr as *mut [u8; DEFAULT_FRAME_SIZE]).write([0u8; DEFAULT_FRAME_SIZE]); }
-                let buf = unsafe { &mut *(data_ptr as *mut [u8; DEFAULT_FRAME_SIZE]) };
+                unsafe { data_ptr.write([0u8; DEFAULT_FRAME_SIZE]); }
+                let buf = unsafe { &mut *data_ptr };
                 buf[..write_len].copy_from_slice(&data[..write_len]);
                 fence(Ordering::SeqCst);
                 self.frames[idx].len.store(write_len as u16, Ordering::Release);

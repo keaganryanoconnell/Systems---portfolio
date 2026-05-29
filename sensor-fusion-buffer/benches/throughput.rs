@@ -40,9 +40,8 @@ fn bench_multi_producer_throughput(c: &mut Criterion) {
                 let mut total = 0usize;
                 while total < 30_000 {
                     batch.clear();
-                    match consumer_buf.try_read_batch(&mut batch, 64) {
-                        Ok(n) => total += n,
-                        Err(_) => {}
+                    if let Ok(n) = consumer_buf.try_read_batch(&mut batch, 64) {
+                        total += n;
                     }
                     if total < 30_000 {
                         std::hint::spin_loop();

@@ -44,7 +44,7 @@ fn test_100k_packets_compression() {
 
         let payload = format!(
             "{:032x},{},{},{},{}",
-            0xDEADBEEF_CAFEu128, ts, 1, val, 2
+            0xDEAD_BEEF_CAFE_u128, ts, 1, val, 2
         );
         send_socket.send(payload.as_bytes()).unwrap();
 

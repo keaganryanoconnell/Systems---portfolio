@@ -40,8 +40,8 @@ fn test_memory_eviction_on_large_dataset() {
 
     let mut total_ingested = 0u32;
     for _ in 0..50 {
-        let mut chunk = manager.alloc_chunk().unwrap();
-        let rows = unsafe { ingest_raw_block(&mut chunk, &test_block).unwrap() };
+        let chunk = manager.alloc_chunk().unwrap();
+        let rows = unsafe { ingest_raw_block(chunk, &test_block).unwrap() };
         total_ingested += rows;
     }
 
@@ -68,8 +68,8 @@ fn test_lru_eviction_order() {
     manager.touch_chunk(chunk0_id);
 
     for _ in 0..5 {
-        let mut c = manager.alloc_chunk().unwrap();
-        unsafe { ingest_raw_block(&mut c, &test_block).ok(); }
+        let c = manager.alloc_chunk().unwrap();
+        unsafe { ingest_raw_block(c, &test_block).ok(); }
     }
 
     let ids: Vec<u32> = manager.chunks().iter().map(|c| c.chunk_id).collect();
@@ -83,17 +83,18 @@ fn test_bbox_query_accuracy() {
     unsafe { ingest_raw_block(&mut chunk, &data).unwrap(); }
 
     let mut output = vec![0u32; 1000];
-    let count = execute_bbox_scan(
-        &chunk, 100.0, 200.0, 200.0, 400.0,
-        output.as_mut_ptr(), 1000,
-    ).unwrap();
+    let count = unsafe {
+        execute_bbox_scan(
+            &chunk, 100.0, 200.0, 200.0, 400.0,
+            output.as_mut_ptr(), 1000,
+        ).unwrap()
+    };
 
-    for i in 0..count {
-        let idx = output[i] as usize;
-        let lat = chunk.latitudes[idx];
-        let lon = chunk.longitudes[idx];
-        assert!(lat >= 100.0 && lat <= 200.0);
-        assert!(lon >= 200.0 && lon <= 400.0);
+    for &idx in output.iter().take(count as usize) {
+        let lat = chunk.latitudes[idx as usize];
+        let lon = chunk.longitudes[idx as usize];
+        assert!((100.0..=200.0).contains(&lat));
+        assert!((200.0..=400.0).contains(&lon));
     }
 }
 
@@ -120,8 +121,8 @@ fn test_no_memory_leak_on_repeated_alloc_free() {
     let test_block = build_test_block(4000);
 
     for _ in 0..20 {
-        let mut chunk = manager.alloc_chunk().unwrap();
-        unsafe { ingest_raw_block(&mut chunk, &test_block).ok(); }
+        let chunk = manager.alloc_chunk().unwrap();
+        unsafe { ingest_raw_block(chunk, &test_block).ok(); }
     }
 
     assert!(manager.heap_used() <= manager.max_capacity());

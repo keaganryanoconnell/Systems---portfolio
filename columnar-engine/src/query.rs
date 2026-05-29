@@ -1,7 +1,16 @@
 use crate::chunk::ColumnarChunk;
 use crate::error::{EngineError, EngineResult};
 
-pub fn execute_filter_scan(
+/// Executes a vectorized latitude-range filter scan on pre-ingested chunk data.
+///
+/// Writes matching row indices to `out_ptr` and returns the count of matches.
+///
+/// # Safety
+///
+/// Caller must ensure `out_ptr` points to a writable buffer of at least `out_capacity`
+/// `u32` elements and that the chunk's column arrays have not been freed or reallocated
+/// concurrently.
+pub unsafe fn execute_filter_scan(
     chunk: &ColumnarChunk,
     min_lat: f32,
     max_lat: f32,
@@ -16,16 +25,14 @@ pub fn execute_filter_scan(
     let len = chunk.row_count as usize;
     let mut out_count = 0usize;
 
-    for i in 0..len {
-        let lat = lats[i];
+    for (i, &lat) in lats.iter().enumerate().take(len) {
         let matches = lat >= min_lat && lat <= max_lat;
 
-        unsafe {
+        if matches {
             let dst = out_ptr.add(out_count);
             *dst = i as u32;
+            out_count += 1;
         }
-
-        out_count += matches as usize;
 
         if out_count >= out_capacity {
             break;
@@ -35,7 +42,16 @@ pub fn execute_filter_scan(
     Ok(out_count)
 }
 
-pub fn execute_bbox_scan(
+/// Executes a vectorized bounding-box filter scan on pre-ingested chunk data.
+///
+/// Writes matching row indices to `out_ptr` and returns the count of matches.
+///
+/// # Safety
+///
+/// Caller must ensure `out_ptr` points to a writable buffer of at least `out_capacity`
+/// `u32` elements and that the chunk's column arrays have not been freed or reallocated
+/// concurrently.
+pub unsafe fn execute_bbox_scan(
     chunk: &ColumnarChunk,
     lat_min: f32, lat_max: f32,
     lon_min: f32, lon_max: f32,
@@ -51,17 +67,14 @@ pub fn execute_bbox_scan(
     let len = chunk.row_count as usize;
     let mut out_count = 0usize;
 
-    for i in 0..len {
-        let lat = lats[i];
-        let lon = lons[i];
+    for (i, (&lat, &lon)) in lats.iter().zip(lons.iter()).enumerate().take(len) {
         let matches = lat >= lat_min && lat <= lat_max && lon >= lon_min && lon <= lon_max;
 
-        unsafe {
+        if matches {
             let dst = out_ptr.add(out_count);
             *dst = i as u32;
+            out_count += 1;
         }
-
-        out_count += matches as usize;
 
         if out_count >= out_capacity {
             break;
@@ -90,7 +103,7 @@ mod tests {
         populate_chunk(&mut chunk, 1000);
 
         let mut output = vec![0u32; 1000];
-        let count = execute_filter_scan(&chunk, 10.0, 20.0, output.as_mut_ptr(), 1000).unwrap();
+        let count = unsafe { execute_filter_scan(&chunk, 10.0, 20.0, output.as_mut_ptr(), 1000).unwrap() };
         assert!(count > 0);
         assert!(count < 1000);
     }
@@ -101,7 +114,7 @@ mod tests {
         populate_chunk(&mut chunk, 100);
 
         let mut output = vec![0u32; 100];
-        let count = execute_filter_scan(&chunk, -100.0, -50.0, output.as_mut_ptr(), 100).unwrap();
+        let count = unsafe { execute_filter_scan(&chunk, -100.0, -50.0, output.as_mut_ptr(), 100).unwrap() };
         assert_eq!(count, 0);
     }
 
@@ -111,9 +124,11 @@ mod tests {
         populate_chunk(&mut chunk, 1000);
 
         let mut output = vec![0u32; 1000];
-        let count = execute_bbox_scan(
-            &chunk, 0.0, 100.0, 0.0, 200.0, output.as_mut_ptr(), 1000,
-        ).unwrap();
+        let count = unsafe {
+            execute_bbox_scan(
+                &chunk, 0.0, 100.0, 0.0, 200.0, output.as_mut_ptr(), 1000,
+            ).unwrap()
+        };
         assert!(count > 0);
     }
 }

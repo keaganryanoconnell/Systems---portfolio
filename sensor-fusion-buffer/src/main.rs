@@ -77,7 +77,7 @@ fn producer(
             }
         }
 
-        if seq as u64 >= TOTAL_FRAMES / 3 {
+        if seq >= TOTAL_FRAMES / 3 {
             break;
         }
 
@@ -98,7 +98,7 @@ fn main() {
     let buffer = Arc::new(MpmcRingBuffer::<SensorFrame, RING_SIZE>::new());
     let running = Arc::new(AtomicBool::new(true));
 
-    let producer_stats = vec![
+    let producer_stats: [Arc<ProducerStats>; 3] = [
         Arc::new(ProducerStats::new()),
         Arc::new(ProducerStats::new()),
         Arc::new(ProducerStats::new()),
@@ -150,7 +150,7 @@ fn main() {
                 let count = consumer_buf.try_read_batch(&mut merged, 64).unwrap_or(0);
                 total += count as u64;
 
-                if count > 0 && total % 10000 == 0 {
+                if count > 0 && total.is_multiple_of(10000) {
                     println!("[Consumer] Read {} frames total, batch of {}", total, count);
                 }
 
@@ -174,13 +174,12 @@ fn main() {
 
     println!();
     println!("=== RESULTS ===");
-    for i in 0..3 {
-        let s = &producer_stats[i];
+    for (i, s) in producer_stats.iter().enumerate() {
         let written = s.frames_written.load(Ordering::Relaxed);
         let total_lat = s.total_latency_ns.load(Ordering::Relaxed);
         let min_lat = s.min_latency_ns.load(Ordering::Relaxed);
         let max_lat = s.max_latency_ns.load(Ordering::Relaxed);
-        let avg_lat = if written > 0 { total_lat / written } else { 0 };
+        let avg_lat = total_lat.checked_div(written).unwrap_or(0);
 
         println!(
             "Producer {}: {} frames | avg={}ns | min={}ns | max={}ns",

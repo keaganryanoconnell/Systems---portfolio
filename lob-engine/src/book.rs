@@ -55,15 +55,14 @@ pub struct OrderBook<'a> {
 
 impl<'a> OrderBook<'a> {
     pub fn new(pool: &'a mut OrderPool) -> Self {
-        let book = Self {
+        Self {
             pool,
             bid_levels: std::array::from_fn(|_| PriceLevel::new(0)),
             bid_count: 0,
             ask_levels: std::array::from_fn(|_| PriceLevel::new(0)),
             ask_count: 0,
             last_trade_price: 0,
-        };
-        book
+        }
     }
 
     pub fn process_order(&mut self, req: OrderRequest) -> Vec<Trade> {
@@ -211,11 +210,7 @@ impl<'a> OrderBook<'a> {
             }
         }
 
-        if trades.is_empty() && remaining > 0 {
-            if let Some(id) = self.pool.alloc(OrderSide::Sell, req.price, remaining) {
-                self.insert_ask(req.price, id);
-            }
-        } else if remaining > 0 {
+        if remaining > 0 {
             if let Some(id) = self.pool.alloc(OrderSide::Sell, req.price, remaining) {
                 self.insert_ask(req.price, id);
             }

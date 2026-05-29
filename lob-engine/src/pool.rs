@@ -13,7 +13,7 @@ pub struct OrderPool {
 
 impl OrderPool {
     pub fn new() -> Self {
-        let pool = Self {
+        Self {
             entries: (0..MAX_ORDERS)
                 .map(|_| MaybeUninit::uninit())
                 .collect::<Vec<_>>()
@@ -21,10 +21,17 @@ impl OrderPool {
             free_stack: vec![0u32; MAX_ORDERS].into_boxed_slice(),
             free_head: 0,
             next_id: 0,
-        };
-        pool
+        }
     }
+}
 
+impl Default for OrderPool {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl OrderPool {
     pub fn alloc(&mut self, side: OrderSide, price: u64, quantity: u32) -> Option<u32> {
         if self.next_id as usize >= MAX_ORDERS {
             if self.free_head == 0 {
@@ -76,5 +83,9 @@ impl OrderPool {
 
     pub fn len(&self) -> usize {
         self.next_id as usize
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.next_id == 0
     }
 }

@@ -86,6 +86,18 @@ impl<V: Clone + Eq + Hash> LwwSet<V> {
     }
 }
 
+impl<V: Clone + Eq + Hash> Clone for LwwSet<V> {
+    fn clone(&self) -> Self {
+        Self {
+            add_set: self.add_set.clone(),
+            remove_set: self.remove_set.clone(),
+            peer_id: self.peer_id,
+            clock: self.clock,
+            last_merged_clock: self.last_merged_clock,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -176,17 +188,5 @@ mod tests {
         let elems = set.elements();
         assert!(elems.contains(&&"active"));
         assert!(!elems.contains(&&"removed"));
-    }
-}
-
-impl<V: Clone + Eq + Hash> Clone for LwwSet<V> {
-    fn clone(&self) -> Self {
-        Self {
-            add_set: self.add_set.clone(),
-            remove_set: self.remove_set.clone(),
-            peer_id: self.peer_id,
-            clock: self.clock,
-            last_merged_clock: self.last_merged_clock,
-        }
     }
 }

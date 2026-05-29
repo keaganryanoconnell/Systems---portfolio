@@ -39,6 +39,7 @@ pub struct SensorFrame {
 }
 
 impl SensorFrame {
+    #[allow(clippy::too_many_arguments)]
     pub fn new_imu(sensor_id: u32, timestamp_ns: u64, sequence: u64, ax: f32, ay: f32, az: f32, gx: f32, gy: f32, gz: f32) -> Self {
         Self {
             sensor_type: SensorType::IMU,

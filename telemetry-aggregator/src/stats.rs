@@ -7,6 +7,12 @@ pub struct IngestStats {
     pub segments_flushed: u64,
 }
 
+impl Default for IngestStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl IngestStats {
     pub fn new() -> Self {
         Self {

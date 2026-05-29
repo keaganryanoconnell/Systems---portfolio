@@ -5,7 +5,7 @@ use telemetry_aggregator::{GorillaCompressor, SensorPoint, parse_coap_payload};
 fn generate_block(count: usize) -> Vec<SensorPoint> {
     (0..count)
         .map(|i| SensorPoint::new(
-            0xDEADBEEF_CAFEu128,
+             0xDEAD_BEEF_CAFE_u128,
             1_717_012_345_678_901 + (i as u64 * 1_000_000),
             (i % 4) as u8,
             234.567 + (i as f64 * 0.001),

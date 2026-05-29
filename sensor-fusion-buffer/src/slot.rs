@@ -26,14 +26,33 @@ impl<T> Slot<T> {
         }
     }
 
+    /// Writes a value into this slot.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure no other thread is concurrently reading from
+    /// or writing to this slot, as enforced by the ring buffer's CAS sequence protocol.
     pub unsafe fn write(&self, value: T) {
         (*self.data.get()).write(value);
     }
 
+    /// Reads a value from this slot.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure the slot contains a valid initialized value and no
+    /// concurrent write is in progress. The ring buffer's sequence protocol guarantees
+    /// this via Acquire/Release ordering.
     pub unsafe fn read(&self) -> T {
         (*self.data.get()).assume_init_read()
     }
 
+    /// Drops the value stored in this slot without reading it.
+    ///
+    /// # Safety
+    ///
+    /// The caller must ensure the slot contains a valid initialized value and will
+    /// not be read after this call. Used after `read()` to prevent double-drops.
     pub unsafe fn drop_value(&self) {
         (*self.data.get()).assume_init_drop();
     }

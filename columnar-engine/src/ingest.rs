@@ -36,6 +36,12 @@ pub fn parse_header(raw_bytes: &[u8]) -> EngineResult<(u32, [u32; 4])> {
     Ok((row_count, offsets))
 }
 
+/// Ingests raw binary data into a columnar chunk via zero-copy pointer casts.
+///
+/// # Safety
+///
+/// Caller must ensure `raw_bytes` points to valid memory matching the SPAT header
+/// format and contains complete column arrays for the declared row count.
 pub unsafe fn ingest_raw_block(chunk: &mut ColumnarChunk, raw_bytes: &[u8]) -> EngineResult<u32> {
     let (row_count, offsets) = parse_header(raw_bytes)?;
 

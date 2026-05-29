@@ -12,7 +12,15 @@ impl GorillaCompressor {
     pub fn new() -> Self {
         Self { block_buffer: Vec::with_capacity(BLOCK_SIZE) }
     }
+}
 
+impl Default for GorillaCompressor {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl GorillaCompressor {
     pub fn ingest(&mut self, points: &[SensorPoint]) -> Option<Vec<u8>> {
         let mut output = None;
         for point in points {
@@ -51,8 +59,7 @@ impl GorillaCompressor {
         let mut prev_timestamp = first.timestamp_us;
         let mut prev_value = first.sensor_value.to_bits();
 
-        for i in 1..block.len() {
-            let p = &block[i];
+        for p in block.iter().skip(1) {
 
             let delta = p.timestamp_us.wrapping_sub(prev_timestamp);
             prev_timestamp = p.timestamp_us;
@@ -95,7 +102,7 @@ impl GorillaCompressor {
         let mut reader = BitReader::new_from_bytes(data);
         let mut points = Vec::with_capacity(expected_count);
 
-        if data.len() < 1 {
+        if data.is_empty() {
             return Ok(points);
         }
 
@@ -164,7 +171,7 @@ mod tests {
 
         for i in 0..BLOCK_SIZE {
             points.push(SensorPoint::new(
-                0xDEADBEEF_CAFEu128,
+                0xDEAD_BEEF_CAFE_u128,
                 1_717_012_345_000_000 + (i as u64 * 1_000_000),
                 1,
                 234.567 + (i as f64 * 0.001),

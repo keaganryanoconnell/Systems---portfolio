@@ -202,7 +202,7 @@ impl RenderPipeline {
 
     pub fn update_buffers(&mut self, data: &[u8]) -> Result<()> {
         let points: &[Point] = bytemuck::cast_slice(data);
-        let slice_size = (points.len() * std::mem::size_of::<Point>()) as u64;
+        let slice_size = std::mem::size_of_val(points) as u64;
         let slice_size = slice_size.min(self.input_buffer.size());
 
         self.queue.write_buffer(&self.input_buffer, 0, &data[..slice_size as usize]);
@@ -229,7 +229,7 @@ impl RenderPipeline {
         let point_count = (self.input_buffer.size() / std::mem::size_of::<Point>() as u64)
             .min(MAX_POINTS);
 
-        let workgroup_count = ((point_count + 255) / 256) as u32;
+        let workgroup_count = point_count.div_ceil(256) as u32;
 
         let mut encoder = self.device.create_command_encoder(
             &wgpu::CommandEncoderDescriptor {

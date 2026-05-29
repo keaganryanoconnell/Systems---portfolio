@@ -39,7 +39,15 @@ impl<T, const N: usize> MpmcRingBuffer<T, N> {
             read_cursor: PaddedU64::new(0),
         }
     }
+}
 
+impl<T, const N: usize> Default for MpmcRingBuffer<T, N> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T, const N: usize> MpmcRingBuffer<T, N> {
     pub fn try_write(&self, value: T) -> Result<u64> {
         let idx = loop {
             let write_seq = self.write_cursor.value.load(Ordering::Acquire);

@@ -19,7 +19,15 @@ impl LatencyStats {
             max_ns: 0,
         }
     }
+}
 
+impl Default for LatencyStats {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl LatencyStats {
     pub fn record(&mut self, latency_ns: u64) {
         self.total_count += 1;
         self.total_sum_ns += latency_ns;
