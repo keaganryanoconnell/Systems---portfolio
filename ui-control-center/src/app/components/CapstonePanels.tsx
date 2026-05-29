@@ -7,6 +7,7 @@ import NetworkPanel from "./NetworkPanel";
 import ProjectCards from "./ProjectCards";
 import { Play, Database, Download } from "lucide-react";
 import BenchmarkDashboard from "./BenchmarkDashboard";
+import PipelineView from "./PipelineView";
 
 function ViewportCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -278,6 +279,9 @@ export default function CapstonePanels() {
         <div className="flex-1 flex flex-col min-w-0">
           <div className="flex-1 relative">
             <div className="absolute inset-0 p-4 flex flex-col gap-3">
+              <div className="bg-surface/30 rounded-lg border border-border p-3">
+                <PipelineView />
+              </div>
               <div className="bg-surface/30 rounded-lg border border-border p-3">
                 <EngineTelemetry
                   heapUsed={heapUsed} heapMax={heapMax} evictions={evictions}
