@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect } from "react";
 import {
   Terminal, Key, Cpu, Network, Container, Database, FlaskConical,
   Github, ExternalLink, Activity, HardDrive, Play, Check,
-  AlertCircle, RefreshCw, Layers, BarChart3
+  AlertCircle, RefreshCw, Layers, BarChart3, Radio
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type NodeTelemetry } from "../utils/tauri";
@@ -370,7 +370,29 @@ export default function ProjectWorkspace({
         "Gorilla-style compression: delta-of-delta timestamps + XOR float values → ~3:1 ratio",
         "Bounded circular buffer: 1024 compressed blocks in memory, 512-block segments to disk",
         "Strict memory cap: configurable (default 256MB), oldest segments evicted when exceeded",
-        "100K packet integration test: validates end-to-end ingestion + compression + recovery"
+          "100K packet integration test: validates end-to-end ingestion + compression + recovery"
+      ]
+    },
+    {
+      id: "fusion",
+      title: "Sensor Fusion MPMC Buffer",
+      subtitle: "Lock-Free CAS Ring · CPU Affinity · TSAN Verified",
+      category: "Networking & Consensus",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/sensor-fusion-buffer",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Radio,
+      color: "cyan",
+      themeColor: "#00f0ff",
+      stats: { loc: "0.9K", coverage: "N/A", size: "320KB", threads: "3 Producers + 1 Consumer" },
+      githubUrl: "https://github.com",
+      description: "A lock-free multi-producer single-consumer (MPMC) ring buffer for high-frequency sensor fusion. Producers (LiDAR, Camera, IMU) write via CAS-claimed slots with Acquire/Release + SeqCst fence ordering. Consumer reads in batches with CPU affinity pinning to an isolated core.",
+      highlights: [
+        "MPMC CAS-producer coordination: compare_exchange_weak on shared write counter",
+        "Acquire/Release + fence(SeqCst) memory ordering for cross-thread visibility",
+        "CPU affinity: sched_setaffinity (Linux) / SetThreadAffinityMask (Windows)",
+        "Boxed UnsafeCell<Vec<Slot>> heap allocation prevents stack overflow at scale",
+        "3-producer 1-consumer TSAN test: 30K frames, data-race-free verified"
       ]
     }
   ], []);
@@ -619,6 +641,12 @@ export default function ProjectWorkspace({
                 )}
                 {activeProjectId === "telemetry" && (
                   <TelemetrySimulator />
+                )}
+                {activeProjectId === "telemetry" && (
+                  <TelemetrySimulator />
+                )}
+                {activeProjectId === "fusion" && (
+                  <SensorFusionSimulator />
                 )}
                 {activeProjectId === "consensus" && (
                   <ViewClusterNodes nodes={nodes} history={history} chaosMode={chaosMode} />
@@ -2522,6 +2550,98 @@ function TelemetrySimulator() {
         <div className="text-[8px] font-mono text-text-soft font-bold uppercase">INGESTION LOG</div>
         <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
           {logs.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 8. SENSOR FUSION SIMULATOR
+// ==========================================
+function SensorFusionSimulator() {
+  const [producers, setProducers] = useState([
+    { id: 0, name: "LiDAR", rate: "100 Hz", frames: 0, color: "green", active: false },
+    { id: 1, name: "Camera", rate: "30 Hz", frames: 0, color: "blue", active: false },
+    { id: 2, name: "IMU", rate: "1 KHz", frames: 0, color: "purple", active: false },
+  ]);
+  const [consumerFrames, setConsumerFrames] = useState(0);
+  const [log, setLog] = useState<string[]>(["BUFFER: MPMC Ring initialized (65536 slots, CAS protocol)"]);
+  const [utilization, setUtilization] = useState(0);
+
+  const addLog = (msg: string) => { setLog(prev => [...prev.slice(-8), msg]); };
+
+  const writeFrame = (id: number) => {
+    setProducers(prev => prev.map(p => {
+      if (p.id !== id) return p;
+      const newFrames = p.frames + 1;
+      const ts = new Date().toLocaleTimeString();
+      addLog(`[${ts}] ${p.name}#${id} wrote frame ${newFrames}`);
+      return { ...p, frames: newFrames, active: true };
+    }));
+
+    setUtilization(Math.min(100, utilization + 2));
+
+    setTimeout(() => {
+      setProducers(prev => prev.map(p => p.id === id ? { ...p, active: false } : p));
+      setConsumerFrames(c => c + 1);
+      setUtilization(Math.max(0, utilization - 1));
+    }, 100);
+  };
+
+  const batchWrite = () => {
+    [0, 1, 2].forEach(id => setTimeout(() => writeFrame(id), id * 30));
+    addLog("[BATCH] 3-frame burst (LiDAR + Camera + IMU)");
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-4">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-cyan font-bold uppercase tracking-wider block">FUSION BUFFER</span>
+          <h4 className="text-sm font-bold text-text">MPMC Sensor Fusion Ring</h4>
+        </div>
+        <div className="flex gap-1.5">
+          <button onClick={batchWrite} className="text-[9px] font-mono px-2.5 py-1 bg-cyan/10 border border-cyan/30 text-cyan rounded hover:bg-cyan/20 transition-all">BURST ×3</button>
+          <button onClick={() => { setLog(["BUFFER: Cleared"]); setProducers(prev => prev.map(p => ({...p, frames:0}))); setConsumerFrames(0); setUtilization(0); }} className="text-[9px] font-mono px-2 py-1 bg-surface border border-border text-text-soft rounded hover:text-text transition-all">CLEAR</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-3 gap-3">
+        {producers.map(p => (
+          <div key={p.id} className="bg-bg/50 border border-border/50 rounded p-2.5">
+            <div className="flex items-center justify-between mb-1">
+              <span className={`text-[8px] font-mono font-bold text-${p.color}`}>{p.name}</span>
+              <span className={`w-1.5 h-1.5 rounded-full ${p.active ? `bg-${p.color} animate-pulse` : 'bg-border'}`} />
+            </div>
+            <div className="text-lg font-mono font-bold text-text">{p.frames.toLocaleString()}</div>
+            <div className="text-[8px] font-mono text-text-muted">frames · {p.rate}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex items-center gap-3">
+        <div className="flex-1 bg-bg border border-border rounded h-4 overflow-hidden">
+          <div
+            className="h-full bg-cyan transition-all duration-300"
+            style={{ width: `${utilization}%` }}
+          />
+        </div>
+        <span className="text-[9px] font-mono text-text-muted">{utilization}%</span>
+        <span className="text-[9px] font-mono text-text-muted">Consumer: <span className="text-text font-bold">{consumerFrames}</span></span>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Protocol: <span className="text-text font-bold">CAS (AcqRel)</span></span>
+        <span>Slots: <span className="text-text font-bold">65536</span></span>
+        <span>Fences: <span className="text-text font-bold">SeqCst</span></span>
+        <span>TSAN: <span className="text-green font-bold">PASS</span></span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">FUSION LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
+          {log.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>
     </div>

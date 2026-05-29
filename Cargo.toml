@@ -4,6 +4,7 @@ members = [
     "core-sys",
     "lob-engine",
     "telemetry-aggregator",
+    "sensor-fusion-buffer",
     "lsm-engine",
     "sql-engine",
     "admin-tools",
