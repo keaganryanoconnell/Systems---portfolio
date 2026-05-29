@@ -22,30 +22,42 @@ const NODE_SPECS: NodeSpec[] = [
   { label: "Core Systems", sub: "Rust · SPSC Queue · Logger", color: "#58a6ff" },
   { label: "Tauri Desktop", sub: "Rust · Tauri 1.5 · IPC", color: "#d2991d" },
   { label: "Render Engine", sub: "Rust · wgpu · WGSL Shader", color: "#d2991d" },
+  { label: "Columnar Engine", sub: "Rust/WASM · bytemuck · LRU Pool", color: "#58a6ff" },
+  { label: "LOB Engine", sub: "Rust · Price-Time · CAS Matching", color: "#3fb950" },
+  { label: "Telemetry Agg", sub: "Rust · Gorilla · Packet Ring", color: "#d2991d" },
+  { label: "Sensor Fusion", sub: "Rust · MPMC CAS · TSAN-safe", color: "#3fb950" },
+  { label: "CRDT Engine", sub: "Rust · LWW-Set · Delta Sync", color: "#8b5cf6" },
+  { label: "Ingestion Server", sub: "Rust · io_uring · TCP Ingest", color: "#58a6ff" },
+  { label: "Sync Server", sub: "Rust · QUIC/WS · Peer Merge", color: "#8b5cf6" },
+  { label: "Admin Tools", sub: "Rust · TUI · Raw HTTP Client", color: "#d2991d" },
 ];
 
 const EDGES: [number, number][] = [
   [0, 1], [1, 2], [1, 7], [2, 3], [3, 4], [3, 5],
   [3, 6], [3, 9], [7, 8], [4, 10], [6, 10], [0, 11],
   [5, 10], [8, 10], [0, 12], [12, 10],
+  [13, 3], [13, 9], [14, 9], [15, 5], [16, 6],
+  [17, 6], [17, 19], [18, 5], [18, 13], [19, 17], [20, 1],
 ];
 
-const CANVAS_W = 800;
-const CANVAS_H = 420;
+const CANVAS_W = 900;
+const CANVAS_H = 520;
 
 function layoutNodes(count: number): { x: number; y: number }[] {
   const positions: { x: number; y: number }[] = [];
-  positions.push({ x: CANVAS_W / 2, y: 50 });
-  const cols = 3;
-  const rowH = 120;
-  const colW = (CANVAS_W - 100) / cols;
-  const startX = colW / 2 + 30;
+  positions.push({ x: CANVAS_W / 2, y: 45 });
+
+  const cols = 5;
+  const rowH = 85;
+  const colW = (CANVAS_W - 80) / cols;
+  const startX = colW / 2 + 25;
+
   for (let i = 2; i <= count + 1; i++) {
     const row = Math.floor((i - 2) / cols);
     const col = (i - 2) % cols;
     positions.push({
       x: startX + col * colW,
-      y: 150 + row * rowH,
+      y: 130 + row * rowH,
     });
   }
   return positions;
@@ -54,7 +66,7 @@ function layoutNodes(count: number): { x: number; y: number }[] {
 export default function ArchMap() {
   const ref = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [size, setSize] = useState({ w: 800, h: 420 });
+  const [size, setSize] = useState({ w: 900, h: 520 });
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -131,14 +143,14 @@ export default function ArchMap() {
         ctx.fillStyle = node.color;
         ctx.fill();
 
-        ctx.font = "bold 11px 'JetBrains Mono', monospace";
+        ctx.font = "bold 10px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#e1e4ea";
         ctx.textAlign = "center";
         ctx.fillText(node.label, pos.x, pos.y - 36);
 
-        ctx.font = "9px 'JetBrains Mono', monospace";
+        ctx.font = "8px 'JetBrains Mono', monospace";
         ctx.fillStyle = "#5c6270";
-        ctx.fillText(node.sub, pos.x, pos.y - 20);
+        ctx.fillText(node.sub, pos.x, pos.y - 22);
       }
 
       frame++;
@@ -154,7 +166,7 @@ export default function ArchMap() {
       <div className="section-heading">System Architecture</div>
       <h2 className="section-title">How Everything Connects</h2>
       <p className="text-text-soft text-base max-w-2xl mb-8">
-        Thirteen crates working together — from the kernel-level container runtime to
+        Twenty crates working together — from the kernel-level container runtime to
         the browser-based control plane. Animated particles show data flow between
         components.
       </p>
