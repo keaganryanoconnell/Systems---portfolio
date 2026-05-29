@@ -21,12 +21,13 @@ const NODE_SPECS: NodeSpec[] = [
   { label: "LSM Engine", sub: "Rust · MemTable · SSTable", color: "#58a6ff" },
   { label: "Core Systems", sub: "Rust · SPSC Queue · Logger", color: "#58a6ff" },
   { label: "Tauri Desktop", sub: "Rust · Tauri 1.5 · IPC", color: "#d2991d" },
+  { label: "Render Engine", sub: "Rust · wgpu · WGSL Shader", color: "#d2991d" },
 ];
 
 const EDGES: [number, number][] = [
   [0, 1], [1, 2], [1, 7], [2, 3], [3, 4], [3, 5],
   [3, 6], [3, 9], [7, 8], [4, 10], [6, 10], [0, 11],
-  [5, 10], [8, 10],
+  [5, 10], [8, 10], [0, 12], [12, 10],
 ];
 
 const CANVAS_W = 800;
@@ -153,7 +154,7 @@ export default function ArchMap() {
       <div className="section-heading">System Architecture</div>
       <h2 className="section-title">How Everything Connects</h2>
       <p className="text-text-soft text-base max-w-2xl mb-8">
-        Eight crates working together — from the kernel-level container runtime to
+        Thirteen crates working together — from the kernel-level container runtime to
         the browser-based control plane. Animated particles show data flow between
         components.
       </p>

@@ -2,7 +2,7 @@
 
 ## Quick-Start for AI Agents
 
-This is a 17-crate Rust monorepo + Next.js 15 frontend. Read this before writing any code.
+This is an 18-crate Rust monorepo + Next.js 15 frontend. Read this before writing any code.
 
 ### Build Commands
 ```bash
@@ -33,7 +33,7 @@ cargo audit
 - **Capstone console:** https://systems-portfolio-five.vercel.app/capstone
 - **GitHub:** https://github.com/keaganryanoconnell/Systems---portfolio
 
-## Architecture (17 Crates)
+## Architecture (18 Crates)
 
 ### Storage & Data Layer (Tier 1)
 | Crate | Purpose | Key Files |
@@ -45,6 +45,7 @@ cargo audit
 | `telemetry-aggregator` | Edge telemetry: Gorilla compression, packet ring | `src/compressor.rs`, `src/ring.rs` |
 | `container-engine` | Linux container runtime (Linux only) | `src/isolate/mod.rs`, `src/security/` |
 | `core-sys` | Lock-free SPSC queue, zero-alloc logger | `src/spsc.rs`, `src/logger.rs` |
+| `render-engine` | WebGPU compute pipeline, WGSL spatial transform shader | `src/pipeline.rs`, `src/lib.rs` |
 
 ### Distributed & Consensus Layer (Tier 2)
 | Crate | Purpose | Key Files |
@@ -71,13 +72,13 @@ cargo audit
 |---|---|
 | `src/app/page.tsx` | Main scrollable portfolio |
 | `src/app/capstone/page.tsx` | FAANG-grade capstone console |
-| `src/app/components/ProjectWorkspace.tsx` | All 17 project widgets (1482 lines) |
+| `src/app/components/ProjectWorkspace.tsx` | All 18 project widgets (~2800 lines) |
 | `src/app/components/CapstonePanels.tsx` | Capstone 3-column layout |
 | `src/app/components/NavBar.tsx` | Sticky nav with scroll-spy |
 | `src/app/components/DeepDives.tsx` | 5 technical deep dives with ASCII diagrams |
 | `src/app/globals.css` | Tailwind v4 theme tokens |
-| `src/shaders/spatial_transform.wgsl` | WGSL compute shader (NOT wired yet) |
-| `src/workers/engine_pool.ts` | Worker pool with SharedArrayBuffer (NOT integrated yet) |
+| `src/shaders/spatial_transform.wgsl` | WGSL compute shader (wired to render-engine crate) |
+| `src/workers/engine_pool.ts` | Worker pool with SharedArrayBuffer (wired via EngineWorkerProvider) |
 | `src/workers/engine_worker.ts` | Worker Atomics.wait() loop (NOT integrated) |
 
 ### How to Add a Portfolio Widget

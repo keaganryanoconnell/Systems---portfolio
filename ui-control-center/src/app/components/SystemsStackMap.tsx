@@ -26,6 +26,7 @@ const NODES: CrateNode[] = [
   { id:"core", label:"Core Sys", tier:1, category:"Storage", x:200,y:300, color:"#58a6ff", problem:"Thread coordination without mutex contention", primitives:"Lock-free SPSC, zero-alloc logger", metric:"50ns push/pop, criterion bench" },
   { id:"tauri", label:"Tauri Desktop", tier:2, category:"Distributed", x:340,y:300, color:"#d2991d", problem:"Electron is 120MB+, needs systems-level shell", primitives:"Tauri 1.5, IPC bridge, native menus", metric:"8MB binary, dialog+shell API" },
   { id:"admin", label:"Admin Tools", tier:3, category:"Capstone", x:400,y:400, color:"#d2991d", problem:"No terminal dashboard for cluster monitoring", primitives:"Zero-dep HTTP, hand-rolled JSON, ANSI TUI", metric:"11 tests, raw TCP client" },
+  { id:"render", label:"Render Engine", tier:1, category:"Storage", x:480,y:300, color:"#d2991d", problem:"CPU-bound coordinate projection at 1M+ points", primitives:"wgpu compute, WGSL shader, GPU dispatch", metric:"1M points/dispatch, 256 threads/workgroup" },
 ];
 
 const TIER_COLORS = ["#3fb950", "#8b5cf6", "#d2991d"];
@@ -33,7 +34,7 @@ const EDGES: [string, string][] = [
   ["capstone","raft"],["capstone","broker"],["capstone","orchestrator"],["capstone","gateway"],
   ["raft","lsm"],["raft","columnar"],["broker","lsm"],["orchestrator","container"],
   ["orchestrator","sensor"],["gateway","sql"],["sql","lsm"],["sql","raft"],
-  ["protocol","raft"],["protocol","broker"],
+  ["protocol","raft"],["protocol","broker"],["render","columnar"],
 ];
 
 export default function SystemsStackMap({ onSelect }: { onSelect: (id: string) => void }) {

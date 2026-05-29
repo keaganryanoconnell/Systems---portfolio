@@ -68,6 +68,10 @@ const PROJECTS = [
     problem:"No terminal dashboard for live cluster monitoring in headless environments.",
     primitives:"Zero-dependency HTTP client, hand-rolled JSON parser, ANSI escape TUI",
     metric:"11 tests, real-time 1s polling, color-coded SWIM peer status display" },
+  { id:"render", name:"WGSL Compute Render Engine", lang:"Rust/WASM", tier:1, status:"ACTIVE",
+    problem:"CPU-bound coordinate projection kills framerate at 1M+ point clouds.",
+    primitives:"wgpu compute pipeline, WGSL spatial_transform shader, bytemuck zero-copy",
+    metric:"1M points/dispatch, 256 threads/workgroup, 5 GPU buffers" },
 ];
 
 export default function ProjectCards({ onSelect }: { onSelect: (id: string) => void }) {
