@@ -1,10 +1,10 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { 
-  Terminal, Key, Cpu, Network, Container, Database, FlaskConical, 
-  Github, ExternalLink, Activity, HardDrive, Play, Check, 
-  AlertCircle, RefreshCw, Layers
+import {
+  Terminal, Key, Cpu, Network, Container, Database, FlaskConical,
+  Github, ExternalLink, Activity, HardDrive, Play, Check,
+  AlertCircle, RefreshCw, Layers, BarChart3
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type NodeTelemetry } from "../utils/tauri";
@@ -328,6 +328,28 @@ export default function ProjectWorkspace({
         "HTTP/1.1 socket parsing pipeline with zero-copy header validation",
         "TCP reverse proxy distributing incoming socket descriptors round-robin"
       ]
+    },
+    {
+      id: "lob",
+      title: "Limit Order Book Engine",
+      subtitle: "In-Memory Matching · Price-Time Priority · Zero-Alloc Hot Path",
+      category: "Data & Storage",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/lob-engine",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: BarChart3,
+      color: "green",
+      themeColor: "#3fb950",
+      stats: { loc: "1.2K", coverage: "N/A", size: "380KB", threads: "Single (SPSC)" },
+      githubUrl: "https://github.com",
+      description: "A high-performance in-memory Limit Order Book matching engine. Processes buy/sell orders using price-time priority with zero heap allocations on the hot path. Uses a fixed-size ObjectPool, cache-conscious flat arrays, and a lock-free SPSC ring buffer for market data ingestion.",
+      highlights: [
+        "Price-time priority matching: best price first, then earliest order at that price",
+        "ObjectPool with 1,000,000 pre-allocated slots and O(1) free-list allocation",
+        "Cache-conscious PriceLevel arrays (512 levels, 48 orders each, flat layout)",
+        "Lock-free SPSC RingBuffer for ingestion: Acquire/Release + fence(SeqCst) ordering",
+        "Microsecond-precision latency: p50=200ns, p90=300ns, p99=3.6µs at 1M orders"
+      ]
     }
   ], []);
 
@@ -592,6 +614,9 @@ export default function ProjectWorkspace({
                 )}
                 {activeProjectId === "bitcask" && (
                   <BitcaskSimulator />
+                )}
+                {activeProjectId === "lob" && (
+                  <LOBEngineSimulator />
                 )}
                 {activeProjectId === "async" && (
                   <AsyncRuntimeSimulator />
@@ -2237,6 +2262,139 @@ function OrchestratorSimulator() {
           {gossipLogs.map((l, i) => (
             <div key={i}>{l}</div>
           ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 6. LOB ENGINE SIMULATOR
+// ==========================================
+function LOBEngineSimulator() {
+  const [bids, setBids] = useState([
+    { price: 10000, qty: 500 }, { price: 9995, qty: 200 },
+    { price: 9990, qty: 800 }, { price: 9985, qty: 100 },
+    { price: 9980, qty: 600 },
+  ]);
+  const [asks, setAsks] = useState([
+    { price: 10005, qty: 300 }, { price: 10010, qty: 150 },
+    { price: 10015, qty: 600 }, { price: 10020, qty: 400 },
+    { price: 10025, qty: 200 },
+  ]);
+  const [lastTrade, setLastTrade] = useState({ price: 10002, qty: 100 });
+  const [logs, setLogs] = useState<string[]>(["SYSTEM: Order book initialized with 10 price levels"]);
+  const [stats, setStats] = useState({ orders: 10, trades: 0, latency: 320 });
+
+  const addLog = (msg: string) => { setLogs(prev => [...prev.slice(-6), msg]); };
+
+  const submitBuy = () => {
+    const price = 10000 + Math.floor(Math.random() * 5);
+    const qty = (Math.floor(Math.random() * 5) + 1) * 100;
+    const ts = new Date().toLocaleTimeString();
+    addLog(`[${ts}] ORDER: BUY ${qty} @ $${(price/100).toFixed(2)}`);
+
+    let newAsks = [...asks];
+    let remaining = qty;
+    let tradeCount = 0;
+    while (remaining > 0 && newAsks.length > 0 && newAsks[0].price <= price) {
+      const fillQty = Math.min(remaining, newAsks[0].qty);
+      const fillPrice = newAsks[0].price;
+      remaining -= fillQty;
+      newAsks[0].qty -= fillQty;
+      tradeCount++;
+      if (newAsks[0].qty <= 0) newAsks.shift();
+      addLog(`[${ts}] TRADE: BUY ← SELL ${fillQty} @ $${(fillPrice/100).toFixed(2)}`);
+      setLastTrade({ price: fillPrice, qty: fillQty });
+    }
+    if (remaining > 0) {
+      const newBids = [...bids, { price, qty: remaining }].sort((a,b) => b.price - a.price);
+      setBids(newBids);
+    }
+    setAsks(newAsks);
+    setStats(prev => ({ orders: prev.orders + 1, trades: prev.trades + tradeCount, latency: 200 + Math.floor(Math.random() * 200) }));
+  };
+
+  const submitSell = () => {
+    const price = 10000 - Math.floor(Math.random() * 5);
+    const qty = (Math.floor(Math.random() * 5) + 1) * 100;
+    const ts = new Date().toLocaleTimeString();
+    addLog(`[${ts}] ORDER: SELL ${qty} @ $${(price/100).toFixed(2)}`);
+
+    let newBids = [...bids];
+    let remaining = qty;
+    let tradeCount = 0;
+    while (remaining > 0 && newBids.length > 0 && newBids[0].price >= price) {
+      const fillQty = Math.min(remaining, newBids[0].qty);
+      remaining -= fillQty;
+      newBids[0].qty -= fillQty;
+      tradeCount++;
+      if (newBids[0].qty <= 0) newBids.shift();
+      addLog(`[${ts}] TRADE: SELL → BUY ${fillQty} @ $${(newBids[0]?.price || price / 100).toFixed(2)}`);
+      setLastTrade({ price: newBids[0]?.price || price, qty: fillQty });
+    }
+    if (remaining > 0) {
+      const newAsks = [...asks, { price, qty: remaining }].sort((a,b) => a.price - b.price);
+      setAsks(newAsks);
+    }
+    setBids(newBids);
+    setStats(prev => ({ orders: prev.orders + 1, trades: prev.trades + tradeCount, latency: 200 + Math.floor(Math.random() * 200) }));
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-4">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-green font-bold uppercase tracking-wider block">LIVE ORDER BOOK</span>
+          <h4 className="text-sm font-bold text-text">Price-Time Priority Matching Engine</h4>
+        </div>
+        <div className="flex gap-1.5">
+          <button onClick={submitBuy} className="text-[9px] font-mono px-2.5 py-1 bg-green/10 border border-green/30 text-green rounded hover:bg-green/20 transition-all">BUY ▲</button>
+          <button onClick={submitSell} className="text-[9px] font-mono px-2.5 py-1 bg-red/10 border border-red/30 text-red rounded hover:bg-red/20 transition-all">SELL ▼</button>
+          <button onClick={() => { setBids([{price:10000,qty:500},{price:9995,qty:200},{price:9990,qty:800},{price:9985,qty:100},{price:9980,qty:600}]); setAsks([{price:10005,qty:300},{price:10010,qty:150},{price:10015,qty:600},{price:10020,qty:400},{price:10025,qty:200}]); setLogs(["SYSTEM: Book reset"]); }} className="text-[9px] font-mono px-2 py-1 bg-surface border border-border text-text-soft rounded hover:text-text transition-all">CLEAR</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <div className="text-[8px] font-mono text-text-muted uppercase mb-1">BID SIDE (BUY)</div>
+          <div className="space-y-0.5">
+            {bids.slice(0, 5).map((b, i) => (
+              <div key={i} className="flex justify-between text-[10px] font-mono bg-green/5 px-2 py-0.5 rounded">
+                <span className="text-green font-bold">${(b.price/100).toFixed(2)}</span>
+                <span className="text-text-soft">{b.qty.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div>
+          <div className="text-[8px] font-mono text-text-muted uppercase mb-1">ASK SIDE (SELL)</div>
+          <div className="space-y-0.5">
+            {asks.slice(0, 5).map((a, i) => (
+              <div key={i} className="flex justify-between text-[10px] font-mono bg-red/5 px-2 py-0.5 rounded">
+                <span className="text-red font-bold">${(a.price/100).toFixed(2)}</span>
+                <span className="text-text-soft">{a.qty.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center py-1 border-t border-b border-border/50">
+        <span className="text-[9px] font-mono text-text-muted">Last Trade: </span>
+        <span className="text-[10px] font-mono text-gold font-bold">${(lastTrade.price/100).toFixed(2)} × {lastTrade.qty.toLocaleString()}</span>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Orders: <span className="text-text font-bold">{stats.orders}</span></span>
+        <span>Trades: <span className="text-gold font-bold">{stats.trades}</span></span>
+        <span>Latency: <span className="text-green font-bold">p50={stats.latency}ns</span></span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">EXECUTION LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
+          {logs.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>
     </div>

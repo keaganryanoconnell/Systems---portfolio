@@ -1,0 +1,13 @@
+[package]
+name = "lob-engine"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "High-performance in-memory Limit Order Book matching engine — zero heap allocations on hot path, cache-conscious data structures, lock-free SPSC ingestion, microsecond-precision latency benchmarking"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+
+[[bench]]
+name = "matching_throughput"
+harness = false

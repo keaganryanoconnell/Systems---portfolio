@@ -2,6 +2,7 @@
 members = [
     "common-protocol",
     "core-sys",
+    "lob-engine",
     "lsm-engine",
     "sql-engine",
     "admin-tools",
