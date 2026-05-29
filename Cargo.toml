@@ -17,6 +17,7 @@ members = [
     "raft-kv",
     "compute-orchestrator",
     "api-gateway",
+    "render-engine",
 ]
 resolver = "2"
 

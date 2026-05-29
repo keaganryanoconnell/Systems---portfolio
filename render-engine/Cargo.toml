@@ -1,0 +1,21 @@
+[package]
+name = "render-engine"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "WebGPU-accelerated spatial data rendering engine — WGSL compute shaders for coordinate projection, LoD culling, and GPU-driven point cloud visualization"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+bytemuck = { version = "1", features = ["derive"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2"
+wgpu = { version = "23", features = ["webgl"] }
+console_error_panic_hook = "0.1"
+web-sys = { version = "0.3", features = ["HtmlCanvasElement", "WebGl2RenderingContext"] }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+wgpu = "23"

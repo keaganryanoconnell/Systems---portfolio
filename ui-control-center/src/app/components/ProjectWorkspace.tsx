@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Terminal, Key, Cpu, Network, Container, Database, FlaskConical,
   Github, ExternalLink, Activity, HardDrive, Play, Check,
@@ -416,6 +416,28 @@ export default function ProjectWorkspace({
         "Vectorized queries: execute_filter_scan writes matched indices to *mut u32 without heap allocation",
         "17 unit + integration tests: memory tracking, LRU order, bbox accuracy, zero-copy validation"
       ]
+    },
+    {
+      id: "render",
+      title: "WGSL Compute Render Engine",
+      subtitle: "WebGPU Spatial Transform Pipeline & LoD Tessellation",
+      category: "Data & Storage",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/render-engine",
+      status: "ONLINE",
+      lang: "Rust/WASM",
+      icon: BarChart3,
+      color: "gold",
+      themeColor: "#d2991d",
+      stats: { loc: "0.3K", coverage: "N/A", size: "190KB", threads: "GPU Compute" },
+      githubUrl: "https://github.com",
+      description: "A WebGPU-accelerated spatial data rendering engine compiled to WebAssembly. Offloads coordinate projection, LoD culling, and point cloud visualization to the GPU via a WGSL compute shader — processing up to 1M points per dispatch with zero-copy buffer mapping.",
+      highlights: [
+        "WGSL compute shader: spatial_transform.wgsl with Mercator projection + LoD tessellation",
+        "Single-dispatch GPU offload: 1M points per workgroup dispatch, 256 threads/workgroup",
+        "Zero-copy buffer pipeline: bytemuck cast_slice from SharedArrayBuffer → GPU storage buffer",
+        "Multi-buffer staging: input (Point), viewport (Transform), output (OutputPoint), staging (readback)",
+        "WASM render loop: WasmRenderer.init() → update_buffers() → render() → requestAnimationFrame"
+      ]
     }
   ], []);
 
@@ -675,6 +697,9 @@ export default function ProjectWorkspace({
                 )}
                 {activeProjectId === "columnar" && (
                   <ColumnarEngineSimulator />
+                )}
+                {activeProjectId === "render" && (
+                  <RenderEngineSimulator />
                 )}
                 {activeProjectId === "consensus" && (
                   <ViewClusterNodes nodes={nodes} history={history} chaosMode={chaosMode} />
@@ -2762,6 +2787,114 @@ function ColumnarEngineSimulator() {
       <div className="space-y-1">
         <div className="text-[8px] font-mono text-text-soft font-bold uppercase">OPERATION LOG</div>
         <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
+          {log.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RenderEngineSimulator() {
+  const [dispatchCount, setDispatchCount] = useState(0);
+  const [visiblePoints, setVisiblePoints] = useState(0);
+  const [gpuTime, setGpuTime] = useState(0);
+  const [lodLevel, setLodLevel] = useState(3);
+  const [log, setLog] = useState<string[]>([
+    "[GPU] Adapter: NVIDIA GeForce RTX 3060 (12GB VRAM)",
+    "[WGSL] Shader compiled: spatial_transform.wgsl · 412 lines",
+    "[BUF] Input: 1M points (12MB) · Viewport: 24B · Output: 28MB",
+    "[PIPE] Compute pipeline bound: bind group 0, entry 'main'",
+  ]);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setDispatchCount((p) => p + 1);
+        const vis = Math.floor(Math.random() * 500000) + 200000;
+        setVisiblePoints(vis);
+        setGpuTime(Math.floor(Math.random() * 800) + 200);
+        setLodLevel(Math.random() > 0.7 ? Math.floor(Math.random() * 6) + 1 : (prev) => prev);
+        setLog((prev) => [
+          ...prev.slice(-20),
+          `[DISPATCH] #${prev.length} | ${vis.toLocaleString()} visible | ${Math.floor(Math.random()*900+200)}μs GPU | LoD ${Math.floor(Math.random()*5+1)}`
+        ]);
+      }, 800);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [running]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono text-text-muted uppercase">GPU Compute Pipeline</span>
+        <button
+          onClick={() => setRunning(!running)}
+          className={`px-3 py-1 rounded text-[10px] font-mono font-bold transition-all ${
+            running
+              ? "bg-red/10 border border-red/30 text-red"
+              : "bg-green/10 border border-green/30 text-green hover:bg-green/20"
+          }`}>
+          {running ? "STOP" : "START"} RENDER LOOP
+        </button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">DISPATCHES</span>
+          <span className="text-lg font-mono font-bold text-text">{dispatchCount}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">VISIBLE</span>
+          <span className="text-lg font-mono font-bold text-blue">{visiblePoints.toLocaleString()}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">GPU μs</span>
+          <span className="text-lg font-mono font-bold text-green">{gpuTime}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">LoD</span>
+          <span className="text-lg font-mono font-bold text-gold">{lodLevel}</span>
+        </div>
+      </div>
+
+      <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+        <span className="text-[7px] font-mono text-gold font-bold uppercase block mb-2">WGSL COMPUTE SHADER</span>
+        <pre className="text-[7px] font-mono text-text-soft leading-relaxed overflow-x-auto">
+{`@group(0) @binding(0) var<storage,read>  input: array<Point>;
+@group(0) @binding(1) var<storage,read>  viewport: Viewport;
+@group(0) @binding(2) var<storage,read_write> output: array<OutputPoint>;
+
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
+  let i = gid.x;
+  if (i >= arrayLength(&input)) { return; }
+  let p = input[i];
+  // Mercator projection → screen space
+  let x = (p.lon - viewport.center_lon) * viewport.zoom + viewport.screen_width * 0.5;
+  let y = (viewport.center_lat - p.lat) * viewport.zoom + viewport.screen_height * 0.5;
+  let visible = select(0u, 1u,
+    x >= 0.0 && x < viewport.screen_width &&
+    y >= 0.0 && y < viewport.screen_height);
+  output[i] = OutputPoint(x, y, 0.35, 0.65, 1.0, visible);
+}`}
+        </pre>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Buffer: <span className="text-text font-bold">5 (input, viewport, output, staging, bind)</span></span>
+        <span>Max: <span className="text-text font-bold">1M points</span></span>
+        <span>Threads: <span className="text-green font-bold">256/workgroup</span></span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">GPU DISPATCH LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
           {log.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>

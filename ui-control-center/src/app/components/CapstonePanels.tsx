@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 import SystemsStackMap from "./SystemsStackMap";
 import EngineTelemetry from "./EngineTelemetry";
 import NetworkPanel from "./NetworkPanel";
+import MemoryMapPanel from "./MemoryMapPanel";
+import DeployPanel from "./DeployPanel";
 import ProjectCards from "./ProjectCards";
 import { Play, Database, Download } from "lucide-react";
 import BenchmarkDashboard from "./BenchmarkDashboard";
@@ -179,7 +181,7 @@ function QueryPanel() {
 }
 
 export default function CapstonePanels() {
-  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench">("stack");
+  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench" | "memory" | "deploy">("stack");
   const [selectedCrate, setSelectedCrate] = useState<string | null>(null);
 
   const [heapUsed, setHeapUsed] = useState(180 * 1024 * 1024);
@@ -256,9 +258,21 @@ export default function CapstonePanels() {
           }`}>
           BENCHMARKS
         </button>
+        <button onClick={()=>setActiveLeftTab("memory")}
+          className={`px-3 py-1.5 text-[9px] font-mono font-bold tracking-wider rounded-t transition-all ${
+            activeLeftTab==="memory" ? "text-gold bg-bg border border-border-b-transparent -mb-px" : "text-text-muted hover:text-text"
+          }`}>
+          MEMORY MAP
+        </button>
+        <button onClick={()=>setActiveLeftTab("deploy")}
+          className={`px-3 py-1.5 text-[9px] font-mono font-bold tracking-wider rounded-t transition-all ${
+            activeLeftTab==="deploy" ? "text-gold bg-bg border border-border-b-transparent -mb-px" : "text-text-muted hover:text-text"
+          }`}>
+          DEPLOY
+        </button>
         <span className="flex-1" />
         <span className="text-[8px] font-mono text-text-muted">
-          16 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
+          17 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
         </span>
       </div>
 
@@ -268,6 +282,10 @@ export default function CapstonePanels() {
             <SystemsStackMap onSelect={setSelectedCrate} />
           ) : activeLeftTab === "bench" ? (
             <BenchmarkDashboard />
+          ) : activeLeftTab === "memory" ? (
+            <MemoryMapPanel />
+          ) : activeLeftTab === "deploy" ? (
+            <DeployPanel />
           ) : (
             <NetworkPanel
               crdtMerges={crdtMerges} quicStreams={quicStreams}
