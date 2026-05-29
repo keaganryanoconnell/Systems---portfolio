@@ -1,5 +1,5 @@
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -40,7 +40,7 @@ fn bench_multi_producer_throughput(c: &mut Criterion) {
                 let mut total = 0usize;
                 while total < 30_000 {
                     batch.clear();
-                    match consumer_buf.try_read_batch(&mut batch) {
+                    match consumer_buf.try_read_batch(&mut batch, 64) {
                         Ok(n) => total += n,
                         Err(_) => {}
                     }
