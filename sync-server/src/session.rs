@@ -62,3 +62,64 @@ impl SessionManager {
         self.sessions.keys().copied().collect()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_session_manager_register_and_count() {
+        let mut mgr = SessionManager::new(10);
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+
+        assert!(mgr.register(id1).is_ok());
+        assert_eq!(mgr.peer_count(), 1);
+
+        assert!(mgr.register(id2).is_ok());
+        assert_eq!(mgr.peer_count(), 2);
+    }
+
+    #[test]
+    fn test_session_manager_max_capacity() {
+        let mut mgr = SessionManager::new(2);
+        assert!(mgr.register(Uuid::new_v4()).is_ok());
+        assert!(mgr.register(Uuid::new_v4()).is_ok());
+        assert!(mgr.register(Uuid::new_v4()).is_err());
+        assert_eq!(mgr.peer_count(), 2);
+    }
+
+    #[test]
+    fn test_session_manager_remove() {
+        let mut mgr = SessionManager::new(10);
+        let id = Uuid::new_v4();
+        mgr.register(id).unwrap();
+        assert_eq!(mgr.peer_count(), 1);
+        mgr.remove(&id);
+        assert_eq!(mgr.peer_count(), 0);
+    }
+
+    #[test]
+    fn test_session_manager_ids() {
+        let mut mgr = SessionManager::new(10);
+        let id1 = Uuid::new_v4();
+        let id2 = Uuid::new_v4();
+        mgr.register(id1).unwrap();
+        mgr.register(id2).unwrap();
+
+        let ids = mgr.ids();
+        assert_eq!(ids.len(), 2);
+        assert!(ids.contains(&id1));
+        assert!(ids.contains(&id2));
+    }
+
+    #[test]
+    fn test_peer_session_initial_state() {
+        let id = Uuid::new_v4();
+        let session = PeerSession::new(id);
+        assert_eq!(session.peer_id, id);
+        assert_eq!(session.deltas_sent, 0);
+        assert_eq!(session.deltas_received, 0);
+        assert!(session.connected_at > 0);
+    }
+}
