@@ -6,6 +6,7 @@ import EngineTelemetry from "./EngineTelemetry";
 import NetworkPanel from "./NetworkPanel";
 import MemoryMapPanel from "./MemoryMapPanel";
 import DeployPanel from "./DeployPanel";
+import StressTestPanel from "./StressTestPanel";
 import ProjectCards from "./ProjectCards";
 import { Play, Database, Download } from "lucide-react";
 import BenchmarkDashboard from "./BenchmarkDashboard";
@@ -183,7 +184,7 @@ function QueryPanel() {
 
 export default function CapstonePanels({ workerMode }: { workerMode: "sim" | "live" }) {
   const { heapUsed: ctxHeapUsed, heapMax: ctxHeapMax, workerStates } = useWorkerEngine();
-  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench" | "memory" | "deploy">("stack");
+  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench" | "memory" | "deploy" | "stress">("stack");
   const [selectedCrate, setSelectedCrate] = useState<string | null>(null);
 
   const heapMax = 256;
@@ -272,6 +273,12 @@ export default function CapstonePanels({ workerMode }: { workerMode: "sim" | "li
           }`}>
           DEPLOY
         </button>
+        <button onClick={()=>setActiveLeftTab("stress")}
+          className={`px-3 py-1.5 text-[9px] font-mono font-bold tracking-wider rounded-t transition-all ${
+            activeLeftTab==="stress" ? "text-[#f85149] bg-bg border border-border-b-transparent -mb-px" : "text-text-muted hover:text-text"
+          }`}>
+          STRESS
+        </button>
         <span className="flex-1" />
         <span className="text-[8px] font-mono text-text-muted">
           18 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
@@ -288,6 +295,8 @@ export default function CapstonePanels({ workerMode }: { workerMode: "sim" | "li
             <MemoryMapPanel />
           ) : activeLeftTab === "deploy" ? (
             <DeployPanel />
+          ) : activeLeftTab === "stress" ? (
+            <StressTestPanel />
           ) : (
             <NetworkPanel
               crdtMerges={crdtMerges} quicStreams={quicStreams}
