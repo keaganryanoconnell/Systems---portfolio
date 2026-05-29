@@ -1,0 +1,6 @@
+[package]
+name = "crdt-engine"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Conflict-Free Replicated Data Type engine — LWW-Element-Set, delta-based state synchronization, vector clock merge, designed for browser-native collaborative editing via WebTransport/QUIC"

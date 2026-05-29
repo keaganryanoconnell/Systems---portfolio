@@ -5,7 +5,8 @@ import SystemsStackMap from "./SystemsStackMap";
 import EngineTelemetry from "./EngineTelemetry";
 import NetworkPanel from "./NetworkPanel";
 import ProjectCards from "./ProjectCards";
-import { Play, Database, Download, ChevronDown, ChevronUp } from "lucide-react";
+import { Play, Database, Download } from "lucide-react";
+import BenchmarkDashboard from "./BenchmarkDashboard";
 
 function ViewportCanvas() {
   const ref = useRef<HTMLCanvasElement>(null);
@@ -177,7 +178,7 @@ function QueryPanel() {
 }
 
 export default function CapstonePanels() {
-  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network">("stack");
+  const [activeLeftTab, setActiveLeftTab] = useState<"stack" | "network" | "bench">("stack");
   const [selectedCrate, setSelectedCrate] = useState<string | null>(null);
 
   const [heapUsed, setHeapUsed] = useState(180 * 1024 * 1024);
@@ -248,6 +249,12 @@ export default function CapstonePanels() {
           }`}>
           NETWORK
         </button>
+        <button onClick={()=>setActiveLeftTab("bench")}
+          className={`px-3 py-1.5 text-[9px] font-mono font-bold tracking-wider rounded-t transition-all ${
+            activeLeftTab==="bench" ? "text-gold bg-bg border border-border-b-transparent -mb-px" : "text-text-muted hover:text-text"
+          }`}>
+          BENCHMARKS
+        </button>
         <span className="flex-1" />
         <span className="text-[8px] font-mono text-text-muted">
           16 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
@@ -258,6 +265,8 @@ export default function CapstonePanels() {
         <div className="w-[350px] shrink-0 border-r border-border">
           {activeLeftTab === "stack" ? (
             <SystemsStackMap onSelect={setSelectedCrate} />
+          ) : activeLeftTab === "bench" ? (
+            <BenchmarkDashboard />
           ) : (
             <NetworkPanel
               crdtMerges={crdtMerges} quicStreams={quicStreams}

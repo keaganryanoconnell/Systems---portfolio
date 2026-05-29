@@ -3,6 +3,7 @@ members = [
     "common-protocol",
     "columnar-engine",
     "core-sys",
+    "crdt-engine",
     "lob-engine",
     "telemetry-aggregator",
     "sensor-fusion-buffer",
