@@ -53,16 +53,17 @@ impl ActorSystem {
         F: Fn(ActorMessage) -> Fut + Send + Sync + 'static,
         Fut: std::future::Future<Output = ()> + Send + 'static,
     {
-        if mailbox_size == 0 || mailbox_size > 65535 {
-            panic!(
-                "mailbox_size must be in range 1..65536, got {}",
-                mailbox_size
-            );
-        }
+        let bounded_mailbox_size = if mailbox_size == 0 {
+            1
+        } else if mailbox_size > 65535 {
+            65535
+        } else {
+            mailbox_size
+        };
 
         let actor_id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let pid = ProcessId::new(self.node_id, actor_id);
-        let (tx, mut rx) = mpsc::channel::<ActorMessage>(mailbox_size);
+        let (tx, mut rx) = mpsc::channel::<ActorMessage>(bounded_mailbox_size);
 
         self.actors.lock().await.insert(actor_id, tx);
         self.states

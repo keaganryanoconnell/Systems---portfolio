@@ -72,9 +72,12 @@ impl SstableWriter {
     }
 }
 
+use std::sync::Mutex;
+
 /// Reads sorted key-value records from an immutable SSTable file.
 pub struct SstableReader {
     file_path: PathBuf,
+    file: Mutex<File>,
     index: Vec<(Vec<u8>, u64)>,
 }
 
@@ -138,8 +141,11 @@ impl SstableReader {
             index.push((key, data_offset));
         }
 
+        let original_file = index_reader.into_inner();
+
         Ok(Self {
             file_path: path.as_ref().to_path_buf(),
+            file: Mutex::new(original_file),
             index,
         })
     }
@@ -160,7 +166,7 @@ impl SstableReader {
 
         let data_offset = self.index[idx].1;
 
-        let mut file = File::open(&self.file_path)?;
+        let mut file = self.file.lock().unwrap_or_else(|e| e.into_inner());
         file.seek(SeekFrom::Start(data_offset))?;
 
         let mut key_len_bytes = [0u8; 4];

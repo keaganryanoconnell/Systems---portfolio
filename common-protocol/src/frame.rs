@@ -13,11 +13,23 @@ pub struct Frame {
 
 impl Frame {
     pub fn new(msg_type: u32, trace_id: u128, payload: Vec<u8>) -> Self {
-        Self { msg_type, trace_id, payload }
+        Self {
+            msg_type,
+            trace_id,
+            payload,
+        }
     }
 
-    pub fn from_message_type(mt: crate::message::MessageType, trace_id: u128, payload: Vec<u8>) -> Self {
-        Self { msg_type: mt.to_u32(), trace_id, payload }
+    pub fn from_message_type(
+        mt: crate::message::MessageType,
+        trace_id: u128,
+        payload: Vec<u8>,
+    ) -> Self {
+        Self {
+            msg_type: mt.to_u32(),
+            trace_id,
+            payload,
+        }
     }
 
     pub fn encode(&self) -> ProtocolResult<Vec<u8>> {
@@ -43,7 +55,9 @@ pub struct FrameDecoder {
 
 impl FrameDecoder {
     pub fn new() -> Self {
-        Self { buffer: Vec::with_capacity(65536) }
+        Self {
+            buffer: Vec::with_capacity(65536),
+        }
     }
 
     pub fn feed_bytes(&mut self, data: &[u8]) -> ProtocolResult<Vec<Frame>> {
@@ -59,52 +73,79 @@ impl FrameDecoder {
 
         while offset + FRAME_HEADER_SIZE <= self.buffer.len() {
             let magic = u32::from_be_bytes([
-                self.buffer[offset], self.buffer[offset+1],
-                self.buffer[offset+2], self.buffer[offset+3],
+                self.buffer[offset],
+                self.buffer[offset + 1],
+                self.buffer[offset + 2],
+                self.buffer[offset + 3],
             ]);
 
             if magic != MAGIC_BYTES {
                 self.buffer.clear();
-                return Err(ProtocolError::InvalidFrame(format!("bad magic: {:08x}", magic)));
+                return Err(ProtocolError::InvalidFrame(format!(
+                    "bad magic: {:08x}",
+                    magic
+                )));
             }
 
             let total_len = u32::from_be_bytes([
-                self.buffer[offset+4], self.buffer[offset+5],
-                self.buffer[offset+6], self.buffer[offset+7],
+                self.buffer[offset + 4],
+                self.buffer[offset + 5],
+                self.buffer[offset + 6],
+                self.buffer[offset + 7],
             ]) as usize;
 
-            if total_len < FRAME_HEADER_SIZE || total_len > MAX_FRAME_SIZE {
+            if !(FRAME_HEADER_SIZE..=MAX_FRAME_SIZE).contains(&total_len) {
                 self.buffer.clear();
-                return Err(ProtocolError::InvalidFrame(format!("bad length: {}", total_len)));
+                return Err(ProtocolError::InvalidFrame(format!(
+                    "bad length: {}",
+                    total_len
+                )));
             }
 
             if offset + total_len > self.buffer.len() {
                 break;
             }
 
-            let version = u16::from_be_bytes([self.buffer[offset+8], self.buffer[offset+9]]);
+            let version = u16::from_be_bytes([self.buffer[offset + 8], self.buffer[offset + 9]]);
             let msg_type = u32::from_be_bytes([
-                self.buffer[offset+10], self.buffer[offset+11],
-                self.buffer[offset+12], self.buffer[offset+13],
+                self.buffer[offset + 10],
+                self.buffer[offset + 11],
+                self.buffer[offset + 12],
+                self.buffer[offset + 13],
             ]);
             let trace_id = u128::from_be_bytes([
-                self.buffer[offset+14], self.buffer[offset+15],
-                self.buffer[offset+16], self.buffer[offset+17],
-                self.buffer[offset+18], self.buffer[offset+19],
-                self.buffer[offset+20], self.buffer[offset+21],
-                self.buffer[offset+22], self.buffer[offset+23],
-                self.buffer[offset+24], self.buffer[offset+25],
-                self.buffer[offset+26], self.buffer[offset+27],
-                self.buffer[offset+28], self.buffer[offset+29],
+                self.buffer[offset + 14],
+                self.buffer[offset + 15],
+                self.buffer[offset + 16],
+                self.buffer[offset + 17],
+                self.buffer[offset + 18],
+                self.buffer[offset + 19],
+                self.buffer[offset + 20],
+                self.buffer[offset + 21],
+                self.buffer[offset + 22],
+                self.buffer[offset + 23],
+                self.buffer[offset + 24],
+                self.buffer[offset + 25],
+                self.buffer[offset + 26],
+                self.buffer[offset + 27],
+                self.buffer[offset + 28],
+                self.buffer[offset + 29],
             ]);
 
             if version != PROTOCOL_VERSION {
                 self.buffer.clear();
-                return Err(ProtocolError::InvalidFrame(format!("bad version: {}", version)));
+                return Err(ProtocolError::InvalidFrame(format!(
+                    "bad version: {}",
+                    version
+                )));
             }
 
-            let payload = self.buffer[offset+FRAME_HEADER_SIZE..offset+total_len].to_vec();
-            frames.push(Frame { msg_type, trace_id, payload });
+            let payload = self.buffer[offset + FRAME_HEADER_SIZE..offset + total_len].to_vec();
+            frames.push(Frame {
+                msg_type,
+                trace_id,
+                payload,
+            });
             offset += total_len;
         }
 
@@ -118,7 +159,9 @@ impl FrameDecoder {
 }
 
 impl Default for FrameDecoder {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

@@ -61,30 +61,63 @@ pub fn tokenize(input: &str) -> Vec<Token> {
         }
 
         if ch == '=' {
-            tokens.push(Token { kind: TokenKind::Eq, lexeme: "=".into() });
+            tokens.push(Token {
+                kind: TokenKind::Eq,
+                lexeme: "=".into(),
+            });
         } else if ch == '!' && pos + 1 < chars.len() && chars[pos + 1] == '=' {
-            tokens.push(Token { kind: TokenKind::Neq, lexeme: "!=".into() });
+            tokens.push(Token {
+                kind: TokenKind::Neq,
+                lexeme: "!=".into(),
+            });
             pos += 1;
         } else if ch == '<' && pos + 1 < chars.len() && chars[pos + 1] == '=' {
-            tokens.push(Token { kind: TokenKind::Lte, lexeme: "<=".into() });
+            tokens.push(Token {
+                kind: TokenKind::Lte,
+                lexeme: "<=".into(),
+            });
             pos += 1;
         } else if ch == '>' && pos + 1 < chars.len() && chars[pos + 1] == '=' {
-            tokens.push(Token { kind: TokenKind::Gte, lexeme: ">=".into() });
+            tokens.push(Token {
+                kind: TokenKind::Gte,
+                lexeme: ">=".into(),
+            });
             pos += 1;
         } else if ch == '<' {
-            tokens.push(Token { kind: TokenKind::Lt, lexeme: "<".into() });
+            tokens.push(Token {
+                kind: TokenKind::Lt,
+                lexeme: "<".into(),
+            });
         } else if ch == '>' {
-            tokens.push(Token { kind: TokenKind::Gt, lexeme: ">".into() });
+            tokens.push(Token {
+                kind: TokenKind::Gt,
+                lexeme: ">".into(),
+            });
         } else if ch == ',' {
-            tokens.push(Token { kind: TokenKind::Comma, lexeme: ",".into() });
+            tokens.push(Token {
+                kind: TokenKind::Comma,
+                lexeme: ",".into(),
+            });
         } else if ch == '(' {
-            tokens.push(Token { kind: TokenKind::LParen, lexeme: "(".into() });
+            tokens.push(Token {
+                kind: TokenKind::LParen,
+                lexeme: "(".into(),
+            });
         } else if ch == ')' {
-            tokens.push(Token { kind: TokenKind::RParen, lexeme: ")".into() });
+            tokens.push(Token {
+                kind: TokenKind::RParen,
+                lexeme: ")".into(),
+            });
         } else if ch == '*' {
-            tokens.push(Token { kind: TokenKind::Star, lexeme: "*".into() });
+            tokens.push(Token {
+                kind: TokenKind::Star,
+                lexeme: "*".into(),
+            });
         } else if ch == ';' {
-            tokens.push(Token { kind: TokenKind::Semicolon, lexeme: ";".into() });
+            tokens.push(Token {
+                kind: TokenKind::Semicolon,
+                lexeme: ";".into(),
+            });
         } else if ch == '\'' || ch == '"' {
             let quote = ch;
             let mut s = String::new();
@@ -93,7 +126,10 @@ pub fn tokenize(input: &str) -> Vec<Token> {
                 s.push(chars[pos]);
                 pos += 1;
             }
-            tokens.push(Token { kind: TokenKind::StringLiteral, lexeme: s });
+            tokens.push(Token {
+                kind: TokenKind::StringLiteral,
+                lexeme: s,
+            });
         } else if ch.is_alphabetic() || ch == '_' {
             let mut s = String::new();
             while pos < chars.len() && (chars[pos].is_alphanumeric() || chars[pos] == '_') {
@@ -135,12 +171,19 @@ pub fn tokenize(input: &str) -> Vec<Token> {
             }
             pos -= 1;
             tokens.push(Token {
-                kind: if is_float { TokenKind::FloatLiteral } else { TokenKind::IntLiteral },
+                kind: if is_float {
+                    TokenKind::FloatLiteral
+                } else {
+                    TokenKind::IntLiteral
+                },
                 lexeme: s,
             });
         }
         pos += 1;
     }
-    tokens.push(Token { kind: TokenKind::Eof, lexeme: "".into() });
+    tokens.push(Token {
+        kind: TokenKind::Eof,
+        lexeme: "".into(),
+    });
     tokens
 }

@@ -6,8 +6,9 @@ pub struct SqlQueryRequest {
     pub query: String,
 }
 
-pub async fn sql_query(Json(req): Json<SqlQueryRequest>) -> Result<Json<serde_json::Value>, StatusCode> {
-
+pub async fn sql_query(
+    Json(req): Json<SqlQueryRequest>,
+) -> Result<Json<serde_json::Value>, StatusCode> {
     let result = serde_json::json!({
         "columns": [],
         "rows": [],

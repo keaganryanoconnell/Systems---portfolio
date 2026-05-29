@@ -17,7 +17,9 @@ pub struct SqlEngine {
 
 impl SqlEngine {
     pub fn new() -> Self {
-        Self { catalog: Catalog::new() }
+        Self {
+            catalog: Catalog::new(),
+        }
     }
 
     pub fn execute(&mut self, query: &SqlQuery) -> SqlResult {

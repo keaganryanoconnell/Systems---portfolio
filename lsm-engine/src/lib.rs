@@ -1,5 +1,5 @@
-pub mod engine;
 pub mod compactor;
+pub mod engine;
 pub mod memtable;
 pub mod sstable;
 

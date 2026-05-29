@@ -25,7 +25,9 @@ pub struct Catalog {
 
 impl Catalog {
     pub fn new() -> Self {
-        Self { tables: HashMap::new() }
+        Self {
+            tables: HashMap::new(),
+        }
     }
 
     pub fn create_table(&mut self, name: &str, columns: Vec<ColumnInfo>) {

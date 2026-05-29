@@ -9,12 +9,12 @@ pub type KeyValuePair = (Vec<u8>, Option<Vec<u8>>);
 use crate::memtable::MemTable;
 use crate::sstable::{SstableReader, SstableWriter};
 
-use tracing::{error, info};
 use std::fs;
 use std::io;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::{Arc, RwLock};
+use tracing::{error, info};
 
 /// Configuration parameters for the LSM Storage Engine.
 #[derive(Debug, Clone)]

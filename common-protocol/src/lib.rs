@@ -14,13 +14,13 @@ pub use error::{ProtocolError, ProtocolResult};
 pub use frame::{Frame, FrameDecoder, MAGIC_BYTES, MAX_FRAME_SIZE, PROTOCOL_VERSION};
 pub use message::MessageType;
 pub use raft::{
-    AppendEntriesArgs, AppendEntriesReply, InstallSnapshotArgs, InstallSnapshotReply,
-    LogEntry, RequestVoteArgs, RequestVoteReply,
+    AppendEntriesArgs, AppendEntriesReply, InstallSnapshotArgs, InstallSnapshotReply, LogEntry,
+    RequestVoteArgs, RequestVoteReply,
 };
 pub use sql::{ColumnDef, QueryPlan, Row, SqlQuery, SqlResult, SqlValue};
 pub use storage::{
-    DeleteRequest, DeleteResponse, GetRequest, GetResponse, KeyValue,
-    PutRequest, ScanRequest, ScanResponse,
+    DeleteRequest, DeleteResponse, GetRequest, GetResponse, KeyValue, PutRequest, ScanRequest,
+    ScanResponse,
 };
 pub use telemetry::{MetricSnapshot, NodeTelemetry, TelemetryQuery};
 

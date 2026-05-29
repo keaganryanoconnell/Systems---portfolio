@@ -7,7 +7,7 @@ use tracing::info;
 
 use crate::handlers::{cluster, compute, health, metrics, sql};
 
-pub async fn run(bind_addr: SocketAddr) {
+pub async fn run(bind_addr: SocketAddr) -> Result<(), Box<dyn std::error::Error>> {
     let cors = CorsLayer::permissive();
     let trace = TraceLayer::new_for_http();
 
@@ -23,7 +23,8 @@ pub async fn run(bind_addr: SocketAddr) {
         .layer(cors)
         .layer(trace);
 
-    let listener = tokio::net::TcpListener::bind(bind_addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(bind_addr).await?;
     info!("API Gateway listening on {}", bind_addr);
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app).await?;
+    Ok(())
 }

@@ -1,15 +1,28 @@
 use std::cell::UnsafeCell;
-use std::sync::atomic::{fence, AtomicUsize, Ordering};
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use crate::error::BrokerResult;
 
 const RING_CAPACITY: usize = 1 << 20;
 
+#[repr(align(64))]
+struct CachePaddedAtomicUsize {
+    value: AtomicUsize,
+}
+
+impl CachePaddedAtomicUsize {
+    const fn new(val: usize) -> Self {
+        Self {
+            value: AtomicUsize::new(val),
+        }
+    }
+}
+
 pub struct RingBuffer {
     buffer: UnsafeCell<Vec<u8>>,
     mask: usize,
-    head: AtomicUsize,
-    tail: AtomicUsize,
+    head: CachePaddedAtomicUsize,
+    tail: CachePaddedAtomicUsize,
 }
 
 impl RingBuffer {
@@ -23,8 +36,8 @@ impl RingBuffer {
         Self {
             buffer,
             mask: capacity - 1,
-            head: AtomicUsize::new(0),
-            tail: AtomicUsize::new(0),
+            head: CachePaddedAtomicUsize::new(0),
+            tail: CachePaddedAtomicUsize::new(0),
         }
     }
 
@@ -33,14 +46,14 @@ impl RingBuffer {
     }
 
     pub fn available_write(&self) -> usize {
-        let head = self.head.load(Ordering::Acquire);
-        let tail = self.tail.load(Ordering::Relaxed);
+        let head = self.head.value.load(Ordering::Acquire);
+        let tail = self.tail.value.load(Ordering::Relaxed);
         self.capacity() - (head.wrapping_sub(tail))
     }
 
     pub fn available_read(&self) -> usize {
-        let head = self.head.load(Ordering::Relaxed);
-        let tail = self.tail.load(Ordering::Acquire);
+        let head = self.head.value.load(Ordering::Relaxed);
+        let tail = self.tail.value.load(Ordering::Acquire);
         head.wrapping_sub(tail)
     }
 
@@ -50,8 +63,8 @@ impl RingBuffer {
             return Ok(0);
         }
 
-        let head = self.head.load(Ordering::Relaxed);
-        let tail = self.tail.load(Ordering::Acquire);
+        let head = self.head.value.load(Ordering::Relaxed);
+        let tail = self.tail.value.load(Ordering::Acquire);
         let available = self.capacity() - (head.wrapping_sub(tail));
 
         if len > available {
@@ -77,8 +90,9 @@ impl RingBuffer {
             }
         }
 
-        fence(Ordering::SeqCst);
-        self.head.store(head.wrapping_add(len), Ordering::Release);
+        self.head
+            .value
+            .store(head.wrapping_add(len), Ordering::Release);
 
         Ok(len)
     }
@@ -89,8 +103,8 @@ impl RingBuffer {
             return Ok(0);
         }
 
-        let tail = self.tail.load(Ordering::Relaxed);
-        let head = self.head.load(Ordering::Acquire);
+        let tail = self.tail.value.load(Ordering::Relaxed);
+        let head = self.head.value.load(Ordering::Acquire);
         let available = head.wrapping_sub(tail);
 
         if available == 0 {
@@ -114,8 +128,8 @@ impl RingBuffer {
             }
         }
 
-        fence(Ordering::SeqCst);
         self.tail
+            .value
             .store(tail.wrapping_add(actual), Ordering::Release);
 
         Ok(actual)
@@ -125,8 +139,8 @@ impl RingBuffer {
     where
         F: FnMut(&[u8]) -> BrokerResult<usize>,
     {
-        let tail = self.tail.load(Ordering::Relaxed);
-        let head = self.head.load(Ordering::Acquire);
+        let tail = self.tail.value.load(Ordering::Relaxed);
+        let head = self.head.value.load(Ordering::Acquire);
         let available = head.wrapping_sub(tail);
 
         if available == 0 {
@@ -154,8 +168,9 @@ impl RingBuffer {
         }
 
         if total > 0 {
-            fence(Ordering::SeqCst);
-            self.tail.store(tail.wrapping_add(total), Ordering::Release);
+            self.tail
+                .value
+                .store(tail.wrapping_add(total), Ordering::Release);
         }
 
         Ok(total)

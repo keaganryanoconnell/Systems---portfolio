@@ -11,10 +11,18 @@ pub struct MessageEnvelope {
 
 impl MessageEnvelope {
     pub fn new(msg_type: u32, trace_id: u128, payload: Vec<u8>) -> Self {
-        Self { msg_type, trace_id, payload }
+        Self {
+            msg_type,
+            trace_id,
+            payload,
+        }
     }
 
-    pub fn from_typed<T: Serialize>(msg_type: u32, trace_id: u128, data: &T) -> ProtocolResult<Self> {
+    pub fn from_typed<T: Serialize>(
+        msg_type: u32,
+        trace_id: u128,
+        data: &T,
+    ) -> ProtocolResult<Self> {
         Ok(Self {
             msg_type,
             trace_id,

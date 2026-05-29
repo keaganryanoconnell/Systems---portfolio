@@ -37,21 +37,34 @@ impl QueryPlanner {
         match statement {
             Statement::Create(stmt) => QueryPlan::CreateTable {
                 table: stmt.table.clone(),
-                columns: stmt.columns.iter().map(|c| (c.name.clone(), format!("{:?}", c.col_type))).collect(),
+                columns: stmt
+                    .columns
+                    .iter()
+                    .map(|c| (c.name.clone(), format!("{:?}", c.col_type)))
+                    .collect(),
             },
             Statement::Drop(stmt) => QueryPlan::DropTable {
                 table: stmt.table.clone(),
             },
             Statement::Insert(stmt) => QueryPlan::Insert {
                 table: stmt.table.clone(),
-                columns: stmt.values.iter().enumerate().map(|(i, _)| (format!("col_{}", i), "val".into())).collect(),
+                columns: stmt
+                    .values
+                    .iter()
+                    .enumerate()
+                    .map(|(i, _)| (format!("col_{}", i), "val".into()))
+                    .collect(),
             },
             Statement::Select(stmt) => QueryPlan::Select {
                 table: stmt.table.clone(),
-                columns: stmt.columns.iter().filter_map(|c| match c {
-                    crate::parser::SelectColumn::All => Some("*".into()),
-                    crate::parser::SelectColumn::Named(n) => Some(n.clone()),
-                }).collect(),
+                columns: stmt
+                    .columns
+                    .iter()
+                    .map(|c| match c {
+                        crate::parser::SelectColumn::All => "*".into(),
+                        crate::parser::SelectColumn::Named(n) => n.clone(),
+                    })
+                    .collect(),
                 where_clause: stmt.where_clause.as_ref().map(|_| "where_clause".into()),
             },
             Statement::Delete(stmt) => QueryPlan::Delete {
@@ -60,7 +73,11 @@ impl QueryPlanner {
             },
             Statement::Update(stmt) => QueryPlan::Update {
                 table: stmt.table.clone(),
-                assignments: stmt.assignments.iter().map(|(k, _)| (k.clone(), "val".into())).collect(),
+                assignments: stmt
+                    .assignments
+                    .iter()
+                    .map(|(k, _)| (k.clone(), "val".into()))
+                    .collect(),
                 where_clause: stmt.where_clause.as_ref().map(|_| "where_clause".into()),
             },
         }

@@ -3,14 +3,15 @@ use tracing::info;
 use tracing_subscriber::FmtSubscriber;
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let subscriber = FmtSubscriber::builder()
         .with_env_filter("api_gateway=info,tower_http=info")
         .with_target(false)
         .finish();
     tracing::subscriber::set_global_default(subscriber).ok();
 
-    let bind_addr: SocketAddr = "0.0.0.0:8080".parse().expect("invalid bind address");
+    let bind_addr: SocketAddr = "0.0.0.0:8080".parse()?;
     info!("Starting API Gateway on {}", bind_addr);
-    api_gateway::router::run(bind_addr).await;
+    api_gateway::router::run(bind_addr).await?;
+    Ok(())
 }

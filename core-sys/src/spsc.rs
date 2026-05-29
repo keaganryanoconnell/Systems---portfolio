@@ -8,13 +8,26 @@ use std::cell::UnsafeCell;
 use std::mem::MaybeUninit;
 use std::sync::atomic::{AtomicUsize, Ordering};
 
+#[repr(align(64))]
+struct CachePaddedAtomicUsize {
+    value: AtomicUsize,
+}
+
+impl CachePaddedAtomicUsize {
+    const fn new(val: usize) -> Self {
+        Self {
+            value: AtomicUsize::new(val),
+        }
+    }
+}
+
 /// A lock-free Single Producer Single Consumer (SPSC) queue of fixed capacity `N`.
 ///
 /// Designed for hardware-sympathetic, low-overhead communication between threads.
 pub struct SpscQueue<T, const N: usize> {
     buffer: [UnsafeCell<MaybeUninit<T>>; N],
-    write_idx: AtomicUsize,
-    read_idx: AtomicUsize,
+    write_idx: CachePaddedAtomicUsize,
+    read_idx: CachePaddedAtomicUsize,
 }
 
 unsafe impl<T: Send, const N: usize> Send for SpscQueue<T, N> {}
@@ -40,8 +53,8 @@ impl<T, const N: usize> SpscQueue<T, N> {
 
         Self {
             buffer,
-            write_idx: AtomicUsize::new(0),
-            read_idx: AtomicUsize::new(0),
+            write_idx: CachePaddedAtomicUsize::new(0),
+            read_idx: CachePaddedAtomicUsize::new(0),
         }
     }
 
@@ -50,8 +63,8 @@ impl<T, const N: usize> SpscQueue<T, N> {
     /// Returns `Err(value)` if the queue is full.
     /// Safe to call only from a single producer thread.
     pub fn push(&self, value: T) -> Result<(), T> {
-        let write = self.write_idx.load(Ordering::Relaxed);
-        let read = self.read_idx.load(Ordering::Acquire); // Synchronize with consumer read progress
+        let write = self.write_idx.value.load(Ordering::Relaxed);
+        let read = self.read_idx.value.load(Ordering::Acquire); // Synchronize with consumer read progress
 
         if write - read >= N {
             // Queue capacity reached
@@ -65,7 +78,7 @@ impl<T, const N: usize> SpscQueue<T, N> {
         }
 
         // Increment write pointer, publishing the value to the consumer
-        self.write_idx.store(write + 1, Ordering::Release);
+        self.write_idx.value.store(write + 1, Ordering::Release);
         Ok(())
     }
 
@@ -74,8 +87,8 @@ impl<T, const N: usize> SpscQueue<T, N> {
     /// Returns `None` if the queue is empty.
     /// Safe to call only from a single consumer thread.
     pub fn pop(&self) -> Option<T> {
-        let read = self.read_idx.load(Ordering::Relaxed);
-        let write = self.write_idx.load(Ordering::Acquire); // Synchronize with producer write progress
+        let read = self.read_idx.value.load(Ordering::Relaxed);
+        let write = self.write_idx.value.load(Ordering::Acquire); // Synchronize with producer write progress
 
         if read == write {
             // Queue is empty
@@ -90,14 +103,14 @@ impl<T, const N: usize> SpscQueue<T, N> {
         };
 
         // Increment read pointer, letting the producer know the slot is free
-        self.read_idx.store(read + 1, Ordering::Release);
+        self.read_idx.value.store(read + 1, Ordering::Release);
         Some(value)
     }
 
     /// Returns the approximate number of items currently in the queue.
     pub fn len(&self) -> usize {
-        let write = self.write_idx.load(Ordering::Relaxed);
-        let read = self.read_idx.load(Ordering::Relaxed);
+        let write = self.write_idx.value.load(Ordering::Relaxed);
+        let read = self.read_idx.value.load(Ordering::Relaxed);
         write.saturating_sub(read)
     }
 

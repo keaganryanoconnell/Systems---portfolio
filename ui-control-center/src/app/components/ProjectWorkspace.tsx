@@ -528,6 +528,18 @@ export default function ProjectWorkspace({
                 {activeProjectId === "container" && (
                   <ViewContainerRuntime chaosMode={chaosMode} />
                 )}
+                {activeProjectId === "protocol" && (
+                  <ProtocolSimulator />
+                )}
+                {activeProjectId === "gateway" && (
+                  <GatewaySimulator />
+                )}
+                {activeProjectId === "sql" && (
+                  <SqlSimulator />
+                )}
+                {activeProjectId === "orchestrator" && (
+                  <OrchestratorSimulator />
+                )}
                 {activeProjectId === "broker" && (
                   <div className="cyber-panel p-6 min-h-[300px] flex flex-col items-center justify-center text-center">
                     <div className="text-4xl mb-4">📡</div>
@@ -590,6 +602,80 @@ export default function ProjectWorkspace({
         </div>
       </div>
     </section>
+  );
+}
+
+// ==========================================
+// 0. PROTOCOL SIMULATOR
+// ==========================================
+function ProtocolSimulator() {
+  const [frames, setFrames] = useState<string[]>([]);
+  const [encodedBytes, setEncodedBytes] = useState<string>("");
+  const [decodedResult, setDecodedResult] = useState<string>("");
+
+  const sendTestFrame = (msgType: string, msgName: string) => {
+    const traceId = Math.random().toString(16).substring(2, 18).toUpperCase();
+    const log = `[0xCAFEBEEF] [len=58] [ver=1] [type=${msgType}] [trace=${traceId}] → ${msgName}`;
+    setFrames(prev => [...prev.slice(-8), `[${new Date().toLocaleTimeString()}] ${log}`]);
+
+    const encoded = `BEEF0000003A00010014${traceId.replace(/[^0-9A-F]/g, '').substring(0, 32).padEnd(32, '0')}`;
+    setEncodedBytes(encoded);
+    setDecodedResult(`{ msg_type: "${msgName}", trace_id: "${traceId}", payload_len: ${Math.floor(Math.random() * 128) + 32} }`);
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-5">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-blue font-bold uppercase tracking-wider block">FRAME PROTOCOL</span>
+          <h4 className="text-sm font-bold text-text">Binary IPC Protocol Inspector</h4>
+        </div>
+        <span className="text-[8px] font-mono text-text-muted">30-byte frame header • 20 message types</span>
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        {[
+          { t: "10", n: "SqlQuery" },
+          { t: "20", n: "RaftAppend" },
+          { t: "30", n: "StoragePut" },
+          { t: "40", n: "ComputeTask" },
+          { t: "50", n: "BrokerProduce" },
+          { t: "60", n: "ContainerRun" },
+          { t: "70", n: "HealthCheck" },
+          { t: "80", n: "Telemetry" },
+        ].map(({ t, n }) => (
+          <button
+            key={t}
+            onClick={() => sendTestFrame(t, n)}
+            className="p-2 rounded border border-border hover:border-blue-border bg-surface/50 text-[9px] font-mono text-text-soft hover:text-blue transition-all text-left"
+          >
+            <span className="text-blue font-bold">0x{t.padStart(2, '0')}</span>
+            <span className="block text-text-muted text-[8px]">{n}</span>
+          </button>
+        ))}
+      </div>
+
+      {encodedBytes && (
+        <div className="bg-bg border border-blue/20 rounded-md p-3">
+          <span className="text-[8px] font-mono text-blue font-bold">ENCODED FRAME (hex)</span>
+          <pre className="text-[9px] font-mono text-text-soft mt-1 break-all">{encodedBytes}</pre>
+          <span className="text-[8px] font-mono text-green font-bold block mt-2">DECODED PAYLOAD</span>
+          <pre className="text-[9px] font-mono text-text-soft mt-0.5">{decodedResult}</pre>
+        </div>
+      )}
+
+      <div className="space-y-1.5">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">PROTOCOL ACTIVITY LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-green leading-relaxed h-[80px] overflow-y-auto">
+          {frames.length === 0 && (
+            <div className="text-text-muted">Click a message type above to send a test frame through the protocol inspector</div>
+          )}
+          {frames.map((f, i) => (
+            <div key={i}>{f}</div>
+          ))}
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1568,3 +1654,592 @@ function RaftSimulator() {
     </div>
   );
 }
+
+// ============================================================================
+// Gateway & Reverse Proxy Simulator
+// ============================================================================
+function GatewaySimulator() {
+  const [logs, setLogs] = useState<string[]>([
+    "[SYSTEM] API Gateway initialized on port 8080...",
+    "[SYSTEM] CORS middleware injected: permissive allowed.",
+    "[SYSTEM] Ready check status: OK."
+  ]);
+  const [tlsStep, setTlsStep] = useState<number>(4); // 4 = Fully established
+  const [activeHop, setActiveHop] = useState<string | null>(null);
+  const [rateLimitCounter, setRateLimitCounter] = useState(0);
+
+  const addLog = (msg: string) => {
+    setLogs(prev => [...prev.slice(-8), `[${new Date().toLocaleTimeString()}] ${msg}`]);
+  };
+
+  const runTlsHandshake = () => {
+    setTlsStep(0);
+    addLog("🔒 Initiating TLS 1.3 cryptographic handshake...");
+    
+    setTimeout(() => {
+      setTlsStep(1);
+      addLog("➔ Handshake Step 1: ClientHello sent (Supported cipher suites, DH Key Share proposal)");
+      
+      setTimeout(() => {
+        setTlsStep(2);
+        addLog("➔ Handshake Step 2: ServerHello received (Selected TLS 1.3, DH Key Exchange computed)");
+        
+        setTimeout(() => {
+          setTlsStep(3);
+          addLog("➔ Handshake Step 3: Server Finished (Session keys generated, handshake transcript encrypted)");
+          
+          setTimeout(() => {
+            setTlsStep(4);
+            addLog("🔒 TLS 1.3 Handshake COMPLETE: Session fully encrypted using AES-GCM-256");
+          }, 400);
+        }, 400);
+      }, 400);
+    }, 200);
+  };
+
+  const handleRouteRequest = (route: string, backendId: string) => {
+    if (rateLimitCounter > 4) {
+      addLog(`❌ HTTP 429: Too Many Requests (Rate limit threshold exceeded for current IP)`);
+      return;
+    }
+
+    setRateLimitCounter(c => c + 1);
+    setTimeout(() => setRateLimitCounter(c => Math.max(0, c - 1)), 5000);
+
+    setActiveHop(backendId);
+    const traceId = Math.random().toString(16).substring(2, 10).toUpperCase();
+    addLog(`➔ INCOMING HTTP: ${route} | Headers: [x-trace-id: TRACE-${traceId}]`);
+
+    if (tlsStep < 4) {
+      addLog(`⚠️ Security warning: TLS session not established, payload transmitted in plaintext!`);
+    }
+
+    setTimeout(() => {
+      addLog(`🔀 Reverse Proxy: routing request to backend service '${backendId}'`);
+      
+      setTimeout(() => {
+        addLog(`✔ Backend response received | Status: 200 OK | Trace-ID: TRACE-${traceId}`);
+        setActiveHop(null);
+      }, 500);
+    }, 300);
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-5">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-purple-400 font-bold uppercase tracking-wider block">ROUTE GATEWAY</span>
+          <h4 className="text-sm font-bold text-text">HTTP Reverse Proxy & Handshake Console</h4>
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={runTlsHandshake}
+            className="text-[9px] font-mono px-2 py-1 bg-purple-900/30 border border-purple-500/50 hover:bg-purple-900/50 text-purple-200 rounded"
+          >
+            RE-KEY TLS 1.3
+          </button>
+        </div>
+      </div>
+
+      {/* Network Hops Visualization */}
+      <div className="grid grid-cols-5 gap-3 items-center py-4 bg-bg/50 border border-border/20 rounded-md relative overflow-hidden">
+        {/* Glow pathways */}
+        <div className="absolute top-1/2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/10 to-transparent -translate-y-1/2" />
+        
+        {/* Client node */}
+        <div className="text-center z-10">
+          <div className="w-10 h-10 rounded-md bg-surface border border-border/50 flex items-center justify-center mx-auto shadow-sm">
+            💻
+          </div>
+          <div className="text-[8px] font-mono text-text-muted mt-1.5">Client Browser</div>
+        </div>
+
+        <div className="text-center font-bold text-purple-400 text-xs animate-pulse">➔</div>
+
+        {/* API Gateway */}
+        <div className="text-center z-10">
+          <div className={`w-12 h-12 rounded-lg flex flex-col items-center justify-center mx-auto transition-all ${
+            tlsStep === 4 ? "bg-purple-950/40 border border-purple-500 shadow-[0_0_10px_rgba(139,92,246,0.2)]" : "bg-surface border border-red/50"
+          }`}>
+            <span className="text-lg">⚡</span>
+            <span className="text-[6px] font-mono text-purple-300 font-bold">PORT 8080</span>
+          </div>
+          <div className="text-[8px] font-mono text-text font-bold mt-1.5">API Gateway</div>
+        </div>
+
+        <div className="text-center font-bold text-purple-400 text-xs animate-pulse">➔</div>
+
+        {/* Backend Services */}
+        <div className="space-y-2 z-10 pr-4">
+          {[
+            { id: 'sql', label: 'sql-engine', icon: '🗄️', color: 'border-blue text-blue bg-blue-bg/10' },
+            { id: 'compute', label: 'compute-orchestrator', icon: '⚙️', color: 'border-gold text-gold bg-gold-bg/10' },
+            { id: 'broker', label: 'log-broker', icon: '📡', color: 'border-green text-green bg-green-bg/10' }
+          ].map(svc => {
+            const isTarget = activeHop === svc.id;
+            return (
+              <div
+                key={svc.id}
+                className={`px-2 py-1.5 rounded border text-[9px] font-mono flex items-center gap-2 transition-all ${
+                  isTarget ? svc.color + " scale-105 border-l-4" : "border-border/30 text-text-soft bg-surface/50"
+                }`}
+              >
+                <span>{svc.icon}</span>
+                <span className="truncate">{svc.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Control Triggers */}
+      <div className="space-y-2">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">Trigger API Endpoint Request</div>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: 'GET /health', path: '/health', svc: 'broker' },
+            { label: 'GET /v1/cluster/nodes', path: '/v1/cluster/nodes', svc: 'compute' },
+            { label: 'POST /v1/sql/query', path: '/v1/sql/query', svc: 'sql' },
+            { label: 'POST /v1/jobs', path: '/v1/jobs', svc: 'compute' },
+            { label: 'GET /v1/metrics', path: '/v1/metrics', svc: 'broker' }
+          ].map(r => (
+            <button
+              key={r.path}
+              disabled={activeHop !== null}
+              onClick={() => handleRouteRequest(r.path, r.svc)}
+              className="text-[9px] font-mono font-bold px-3 py-1.5 rounded border border-border hover:border-purple-500/50 hover:bg-purple-950/10 text-text-soft hover:text-text transition-all disabled:opacity-30"
+            >
+              {r.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Gateway Console Access Log */}
+      <div className="space-y-1.5">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">Gateway Access logs</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-purple-300 leading-relaxed h-[110px] overflow-y-auto">
+          {logs.map((l, i) => (
+            <div key={i}>{l}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// SQL Engine Sandbox & AST Simulator
+// ============================================================================
+function SqlSimulator() {
+  const [query, setQuery] = useState("SELECT id, cpu, status FROM nodes WHERE status = 'Healthy';");
+  const [tokens, setTokens] = useState<string[]>([]);
+  const [ast, setAst] = useState<any>(null);
+  const [execPlan, setExecPlan] = useState<string>("");
+
+  const handleParse = () => {
+    const q = query.trim();
+    if (!q) return;
+
+    // Build mock tokens
+    const rawTokens = q.split(/\s+|([,;()=><])/).filter(t => t && t.trim() !== "");
+    setTokens(rawTokens);
+
+    // Simple parser engine simulation
+    const isSelect = q.toUpperCase().startsWith("SELECT");
+    const isInsert = q.toUpperCase().startsWith("INSERT");
+    const isCreate = q.toUpperCase().startsWith("CREATE");
+
+    if (isSelect) {
+      // Parse SELECT AST
+      const whereIdx = q.toUpperCase().indexOf("WHERE");
+      const fromIdx = q.toUpperCase().indexOf("FROM");
+      
+      const projections = q.substring(6, fromIdx).trim().split(",").map(s => s.trim());
+      const table = q.substring(fromIdx + 4, whereIdx === -1 ? q.length : whereIdx).replace(";", "").trim();
+      const whereFilter = whereIdx !== -1 ? q.substring(whereIdx + 5).replace(";", "").trim() : null;
+
+      setAst({
+        type: "SelectStatement",
+        table,
+        projections,
+        filter: whereFilter ? {
+          expression: whereFilter,
+          op: whereFilter.includes("=") ? "Equals" : "GreaterThan"
+        } : null
+      });
+
+      setExecPlan(
+        `IndexScan(table: "${table}", index: "${table}_pkey")\n` +
+        (whereFilter ? `  └─ Filter: ${whereFilter}\n` : "") +
+        `  └─ Project: ${projections.join(", ")}`
+      );
+    } else if (isInsert) {
+      const intoIdx = q.toUpperCase().indexOf("INTO");
+      const valuesIdx = q.toUpperCase().indexOf("VALUES");
+      
+      const table = q.substring(intoIdx + 4, valuesIdx).trim();
+      const values = q.substring(valuesIdx + 6).replace(/[();]/g, "").split(",").map(v => v.trim());
+
+      setAst({
+        type: "InsertStatement",
+        table,
+        values: values.map(v => v.replace(/['"]/g, ""))
+      });
+
+      setExecPlan(
+        `InsertExecutor(table: "${table}")\n` +
+        `  └─ RowValues: [${values.join(", ")}]`
+      );
+    } else if (isCreate) {
+      const tableIdx = q.toUpperCase().indexOf("TABLE");
+      const parenIdx = q.indexOf("(");
+      
+      const table = q.substring(tableIdx + 5, parenIdx).trim();
+      const columnsDef = q.substring(parenIdx + 1, q.lastIndexOf(")")).split(",").map(c => c.trim());
+
+      setAst({
+        type: "CreateTableStatement",
+        table,
+        columns: columnsDef.map(col => {
+          const parts = col.split(/\s+/);
+          return { name: parts[0], type: parts[1] };
+        })
+      });
+
+      setExecPlan(`CreateTableExecutor(table: "${table}", columns: ${columnsDef.length})`);
+    } else {
+      setAst({ type: "UnknownStatement", raw: q });
+      setExecPlan("SyntaxError: Expected SELECT, INSERT, or CREATE TABLE");
+    }
+  };
+
+  useEffect(() => {
+    handleParse();
+  }, []);
+
+  return (
+    <div className="cyber-panel p-5 space-y-5">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-blue font-bold uppercase tracking-wider block">QUERY PARSER</span>
+          <h4 className="text-sm font-bold text-text">Recursive Descent SQL Engine Sandbox</h4>
+        </div>
+        <div className="flex gap-1.5">
+          {[
+            { label: 'SELECT', sql: "SELECT id, cpu, status FROM nodes WHERE status = 'Healthy';" },
+            { label: 'INSERT', sql: "INSERT INTO nodes VALUES (6, 'Follower', 25);" },
+            { label: 'CREATE', sql: "CREATE TABLE metrics (id INT, iops INT, lag REAL);" }
+          ].map(btn => (
+            <button
+              key={btn.label}
+              onClick={() => { setQuery(btn.sql); setTimeout(handleParse, 50); }}
+              className="text-[8px] font-mono px-2 py-0.5 border border-border hover:border-blue/50 text-text-soft hover:text-text rounded bg-surface/50"
+            >
+              {btn.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* SQL Sandbox Inputs */}
+      <div className="flex gap-3">
+        <textarea
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          rows={2}
+          className="flex-1 bg-bg border border-border/80 rounded px-2.5 py-1.5 text-xs font-mono text-text outline-none focus:border-blue/50 transition-colors resize-none"
+        />
+        <button
+          onClick={handleParse}
+          className="px-4 bg-blue-bg/20 border border-blue-border text-blue font-mono font-bold text-[10px] rounded hover:bg-blue-bg/40 transition-colors uppercase tracking-wider"
+        >
+          Parse
+        </button>
+      </div>
+
+      {/* AST & Planning Output Panels */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Abstract Syntax Tree Visualizer */}
+        <div className="border border-border/30 rounded bg-bg/40 p-3 relative">
+          <div className="text-[8px] font-mono text-text-soft font-bold uppercase tracking-wider mb-2 border-b border-border/20 pb-1">
+            PARSED_AST (Abstract Syntax Tree)
+          </div>
+          {ast ? (
+            <div className="text-[9px] font-mono text-text leading-relaxed max-h-[140px] overflow-y-auto space-y-1">
+              <div className="text-blue font-bold">Node: {ast.type}</div>
+              <div className="pl-3">
+                <div>└─ table: <span className="text-gold font-bold">"{ast.table}"</span></div>
+                {ast.projections && (
+                  <div>
+                    └─ columns: [
+                    {ast.projections.map((p: string, idx: number) => (
+                      <span key={p} className="text-green font-bold">"{p}"{idx < ast.projections.length - 1 ? ", " : ""}</span>
+                    ))}
+                    ]
+                  </div>
+                )}
+                {ast.values && (
+                  <div>
+                    └─ values: [
+                    {ast.values.map((v: string, idx: number) => (
+                      <span key={v} className="text-green font-bold">"{v}"{idx < ast.values.length - 1 ? ", " : ""}</span>
+                    ))}
+                    ]
+                  </div>
+                )}
+                {ast.columns && (
+                  <div className="pl-3">
+                    └─ columnsDef:
+                    {ast.columns.map((c: any) => (
+                      <div key={c.name} className="pl-3 text-text-soft">
+                        • {c.name}: <span className="text-purple-400 font-bold">{c.type}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {ast.filter && (
+                  <div className="pl-3">
+                    └─ filter:
+                    <div className="pl-3 text-text-soft">
+                      • expression: <span className="text-purple-400 font-bold">"{ast.filter.expression}"</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-[9px] font-mono text-text-muted">// Awaiting AST compilation...</div>
+          )}
+        </div>
+
+        {/* Physical Query Planner */}
+        <div className="border border-border/30 rounded bg-bg/40 p-3 relative">
+          <div className="text-[8px] font-mono text-text-soft font-bold uppercase tracking-wider mb-2 border-b border-border/20 pb-1">
+            QUERY_EXPLAIN_PLAN
+          </div>
+          <pre className="text-[9px] font-mono text-green leading-relaxed max-h-[140px] overflow-y-auto whitespace-pre-wrap">
+            {execPlan || "// Planning query pipeline..."}
+          </pre>
+        </div>
+      </div>
+
+      {/* Lexical Tokens stream */}
+      <div className="space-y-1.5">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">Token Stream Stream</div>
+        <div className="flex flex-wrap gap-1 bg-bg/30 p-2 border border-border/20 rounded max-h-[70px] overflow-y-auto">
+          {tokens.map((tok, i) => (
+            <span
+              key={i}
+              className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${
+                ["SELECT", "INSERT", "INTO", "VALUES", "CREATE", "TABLE", "WHERE", "FROM"].includes(tok.toUpperCase())
+                  ? "bg-purple-900/10 border-purple-500/40 text-purple-300 font-bold"
+                  : tok.match(/^[0-9]+$/)
+                  ? "bg-green-bg/10 border-green/40 text-green"
+                  : "bg-surface border-border/30 text-text-soft"
+              }`}
+            >
+              {tok}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Cloud Compute Orchestrator Simulator
+// ============================================================================
+function OrchestratorSimulator() {
+  const [nodes, setNodes] = useState([
+    { id: 1, state: 'Alive', activeActors: 4 },
+    { id: 2, state: 'Alive', activeActors: 2 },
+    { id: 3, state: 'Alive', activeActors: 3 },
+    { id: 4, state: 'Alive', activeActors: 1 },
+    { id: 5, state: 'Alive', activeActors: 5 },
+  ]);
+  const [gossipLogs, setGossipLogs] = useState<string[]>([
+    "[SWIM] Gossip cluster listening on UDP port 7946...",
+    "[SWIM] Node 1 coordinates established as seed member."
+  ]);
+  const [tasks, setTasks] = useState<Array<{ id: string, micro: number, progress: number, activeNode: number | null }>>([]);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const addGossipLog = (msg: string) => {
+    setGossipLogs(prev => [...prev.slice(-6), `[GOSSIP] ${msg}`]);
+  };
+
+  // Run Gossip pinging cycle
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const aliveNodes = nodes.filter(n => n.state === 'Alive');
+      if (aliveNodes.length < 2) return;
+
+      // Pick random sender and receiver
+      const sender = aliveNodes[Math.floor(Math.random() * aliveNodes.length)];
+      const otherNodes = nodes.filter(n => n.id !== sender.id);
+      const target = otherNodes[Math.floor(Math.random() * otherNodes.length)];
+
+      if (target.state === 'Alive') {
+        addGossipLog(`Node ${sender.id} PING ➔ Node ${target.id} | Result: ACK received (0.8ms)`);
+      } else if (target.state === 'Suspect') {
+        addGossipLog(`Node ${sender.id} PING ➔ Node ${target.id} | Result: TIMEOUT. Triggering PING-REQ...`);
+        // Trigger Ping-Req via a helper node
+        const helperCandidates = aliveNodes.filter(n => n.id !== sender.id && n.id !== target.id);
+        if (helperCandidates.length > 0) {
+          const helper = helperCandidates[0];
+          addGossipLog(`Node ${sender.id} request PING-REQ to Node ${target.id} via Node ${helper.id}...`);
+          setTimeout(() => {
+            if (target.state === 'Dead' || target.state === 'Suspect') {
+              addGossipLog(`❌ Node ${helper.id} confirmed timeout on Node ${target.id}. Dead state confirmed.`);
+              setNodes(prev => prev.map(n => n.id === target.id ? { ...n, state: 'Dead', activeActors: 0 } : n));
+            }
+          }, 400);
+        }
+      }
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [nodes]);
+
+  const toggleNodeState = (nodeId: number) => {
+    setNodes(prev => prev.map(n => {
+      if (n.id !== nodeId) return n;
+      const newState = n.state === 'Alive' ? 'Suspect' : 'Alive';
+      addGossipLog(`Node ${nodeId} failure injected: marked as ${newState}`);
+      return { ...n, state: newState, activeActors: newState === 'Alive' ? Math.floor(Math.random() * 5) + 1 : 0 };
+    }));
+  };
+
+  const submitJob = () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    const jobId = Math.random().toString(16).substring(2, 6).toUpperCase();
+    addGossipLog(`⚡ Job job-${jobId} submitted to cluster orchestrator scheduler.`);
+    
+    // Task Splitting: MacroTask divided into microtasks
+    const activeWorkers = nodes.filter(n => n.state === 'Alive');
+    if (activeWorkers.length === 0) {
+      addGossipLog("❌ Scheduling error: No active nodes in cluster gossip table!");
+      setIsProcessing(false);
+      return;
+    }
+
+    addGossipLog(`📋 Workload Split: job-${jobId} divided into ${activeWorkers.length} MicroTasks.`);
+
+    const newTasks = activeWorkers.map((w, idx) => ({
+      id: `task-${jobId}-${idx + 1}`,
+      micro: 200,
+      progress: 0,
+      activeNode: w.id
+    }));
+
+    setTasks(newTasks);
+
+    // Simulate progress updating
+    let progressTimer = setInterval(() => {
+      setTasks(prev => {
+        const updated = prev.map(t => {
+          if (t.progress >= 100) return t;
+          return { ...t, progress: t.progress + 20 };
+        });
+        
+        if (updated.every(t => t.progress >= 100)) {
+          clearInterval(progressTimer);
+          setIsProcessing(false);
+          addGossipLog(`✔ Job job-${jobId} fully completed! Workload aggregation resolved.`);
+        }
+        return updated;
+      });
+    }, 300);
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-5">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-gold font-bold uppercase tracking-wider block">COMPUTE ORCHESTRATOR</span>
+          <h4 className="text-sm font-bold text-text">Actor Model & SWIM Gossip Protocol Simulator</h4>
+        </div>
+        <button
+          onClick={submitJob}
+          disabled={isProcessing}
+          className="text-[9px] font-mono font-bold px-3 py-1 bg-gold-bg/20 border border-gold hover:bg-gold-bg/40 text-gold rounded disabled:opacity-40"
+        >
+          {isProcessing ? 'PROCESSING...' : 'SUBMIT WORKLOAD'}
+        </button>
+      </div>
+
+      {/* SWIM Cluster Mesh Grid */}
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">SWIM Cluster Membership Nodes (Click node to Crash/Revive)</div>
+        <div className="grid grid-cols-5 gap-3">
+          {nodes.map(n => {
+            const isAlive = n.state === 'Alive';
+            const isSuspect = n.state === 'Suspect';
+            const isDead = n.state === 'Dead';
+            return (
+              <button
+                key={n.id}
+                onClick={() => toggleNodeState(n.id)}
+                className={`p-3 rounded border font-mono text-center relative flex flex-col items-center justify-center transition-all ${
+                  isAlive ? "bg-bg/40 border-green/50 text-text" :
+                  isSuspect ? "bg-gold-bg/10 border-gold/70 text-gold shadow-[0_0_5px_rgba(210,153,29,0.3)] animate-pulse" :
+                  "bg-neutral-900 border-red/40 text-text-muted opacity-60"
+                }`}
+              >
+                <div className="text-[10px] font-bold">NODE_0{n.id}</div>
+                <div className="text-[7px] mt-1 uppercase font-bold px-1 py-0.5 border rounded opacity-90 scale-95">
+                  {n.state}
+                </div>
+                <div className="text-[7px] text-text-soft mt-1.5">
+                  Actors: {n.activeActors}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Task Scheduling & Dispatch progress */}
+      {tasks.length > 0 && (
+        <div className="space-y-1.5 border border-border/30 rounded bg-bg/40 p-3">
+          <div className="text-[8px] font-mono text-text-soft font-bold uppercase tracking-wider">Active Task Dispatch scheduler</div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {tasks.map(t => (
+              <div key={t.id} className="text-[9px] font-mono space-y-1 bg-bg/50 p-2 rounded border border-border/20">
+                <div className="flex justify-between">
+                  <span className="text-text font-bold">{t.id}</span>
+                  <span className="text-text-soft">Worker: NODE_0{t.activeNode}</span>
+                </div>
+                <div className="w-full bg-surface h-1.5 rounded-full overflow-hidden border border-border/30">
+                  <div
+                    className="bg-gold h-full transition-all duration-300"
+                    style={{ width: `${t.progress}%` }}
+                  />
+                </div>
+                <div className="flex justify-between text-[7px] text-text-soft">
+                  <span>Chunk: {t.micro} items</span>
+                  <span>{t.progress}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Gossip membership Log Console */}
+      <div className="space-y-1.5">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">SWIM Gossip & Cluster state log</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-gold leading-relaxed h-[95px] overflow-y-auto">
+          {gossipLogs.map((l, i) => (
+            <div key={i}>{l}</div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+

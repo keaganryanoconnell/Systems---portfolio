@@ -29,9 +29,9 @@ describe('About', () => {
 
   it('renders project summary list', () => {
     render(<About />);
-    expect(screen.getByText(/Container Engine/)).toBeInTheDocument();
+    expect(screen.getByText(/Container Runtime/)).toBeInTheDocument();
     expect(screen.getByText(/Distributed Log Broker/)).toBeInTheDocument();
-    expect(screen.getByText(/Platform Nodes/)).toBeInTheDocument();
+    expect(screen.getByText(/Raft Distributed KV/)).toBeInTheDocument();
   });
 });
 

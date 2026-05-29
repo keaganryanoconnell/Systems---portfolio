@@ -1,8 +1,8 @@
 pub mod ast;
 mod lexer;
 
-pub use ast::*;
 use crate::catalog::ColumnType;
+pub use ast::*;
 use lexer::{Token, TokenKind};
 
 struct Parser {
@@ -25,7 +25,7 @@ impl Parser {
         t
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<&Token, String> {
+    fn expect_token(&mut self, kind: TokenKind) -> Result<&Token, String> {
         if self.peek().kind == kind {
             Ok(self.advance())
         } else {
@@ -46,7 +46,7 @@ impl Parser {
     }
 
     fn parse_select(&mut self) -> Result<SelectStmt, String> {
-        self.expect(TokenKind::Select)?;
+        self.expect_token(TokenKind::Select)?;
 
         let columns = if self.peek().kind == TokenKind::Star {
             self.advance();
@@ -54,7 +54,7 @@ impl Parser {
         } else {
             let mut cols = Vec::new();
             loop {
-                let name = self.expect(TokenKind::Identifier)?.lexeme.clone();
+                let name = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
                 cols.push(SelectColumn::Named(name));
                 if self.peek().kind != TokenKind::Comma {
                     break;
@@ -64,8 +64,8 @@ impl Parser {
             cols
         };
 
-        self.expect(TokenKind::From)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::From)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
 
         let where_clause = if self.peek().kind == TokenKind::Where {
             self.advance();
@@ -74,15 +74,19 @@ impl Parser {
             None
         };
 
-        Ok(SelectStmt { columns, table, where_clause })
+        Ok(SelectStmt {
+            columns,
+            table,
+            where_clause,
+        })
     }
 
     fn parse_insert(&mut self) -> Result<InsertStmt, String> {
-        self.expect(TokenKind::Insert)?;
-        self.expect(TokenKind::Into)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
-        self.expect(TokenKind::Values)?;
-        self.expect(TokenKind::LParen)?;
+        self.expect_token(TokenKind::Insert)?;
+        self.expect_token(TokenKind::Into)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::Values)?;
+        self.expect_token(TokenKind::LParen)?;
 
         let mut values = Vec::new();
         loop {
@@ -92,21 +96,25 @@ impl Parser {
             }
             self.advance();
         }
-        self.expect(TokenKind::RParen)?;
+        self.expect_token(TokenKind::RParen)?;
 
-        Ok(InsertStmt { table, columns: None, values })
+        Ok(InsertStmt {
+            table,
+            columns: None,
+            values,
+        })
     }
 
     fn parse_create(&mut self) -> Result<CreateStmt, String> {
-        self.expect(TokenKind::Create)?;
-        self.expect(TokenKind::Table)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
-        self.expect(TokenKind::LParen)?;
+        self.expect_token(TokenKind::Create)?;
+        self.expect_token(TokenKind::Table)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::LParen)?;
 
         let mut columns = Vec::new();
         loop {
-            let name = self.expect(TokenKind::Identifier)?.lexeme.clone();
-            let type_name = self.expect(TokenKind::Identifier)?.lexeme.clone();
+            let name = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
+            let type_name = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
             let col_type = match type_name.as_str() {
                 "int" | "integer" => ColumnType::Int,
                 "text" | "varchar" | "string" => ColumnType::Text,
@@ -120,22 +128,22 @@ impl Parser {
             }
             self.advance();
         }
-        self.expect(TokenKind::RParen)?;
+        self.expect_token(TokenKind::RParen)?;
 
         Ok(CreateStmt { table, columns })
     }
 
     fn parse_drop(&mut self) -> Result<DropStmt, String> {
-        self.expect(TokenKind::Drop)?;
-        self.expect(TokenKind::Table)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::Drop)?;
+        self.expect_token(TokenKind::Table)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
         Ok(DropStmt { table })
     }
 
     fn parse_delete(&mut self) -> Result<DeleteStmt, String> {
-        self.expect(TokenKind::Delete)?;
-        self.expect(TokenKind::From)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::Delete)?;
+        self.expect_token(TokenKind::From)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
 
         let where_clause = if self.peek().kind == TokenKind::Where {
             self.advance();
@@ -144,18 +152,21 @@ impl Parser {
             None
         };
 
-        Ok(DeleteStmt { table, where_clause })
+        Ok(DeleteStmt {
+            table,
+            where_clause,
+        })
     }
 
     fn parse_update(&mut self) -> Result<UpdateStmt, String> {
-        self.expect(TokenKind::Update)?;
-        let table = self.expect(TokenKind::Identifier)?.lexeme.clone();
-        self.expect(TokenKind::Set)?;
+        self.expect_token(TokenKind::Update)?;
+        let table = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
+        self.expect_token(TokenKind::Set)?;
 
         let mut assignments = Vec::new();
         loop {
-            let col = self.expect(TokenKind::Identifier)?.lexeme.clone();
-            self.expect(TokenKind::Eq)?;
+            let col = self.expect_token(TokenKind::Identifier)?.lexeme.clone();
+            self.expect_token(TokenKind::Eq)?;
             let val = self.parse_expression()?;
             assignments.push((col, val));
             if self.peek().kind != TokenKind::Comma {
@@ -171,7 +182,11 @@ impl Parser {
             None
         };
 
-        Ok(UpdateStmt { table, assignments, where_clause })
+        Ok(UpdateStmt {
+            table,
+            assignments,
+            where_clause,
+        })
     }
 
     fn parse_expression(&mut self) -> Result<Expression, String> {
@@ -192,8 +207,12 @@ impl Parser {
         let mut left = self.parse_primary()?;
         let op = self.peek().kind.clone();
         match op {
-            TokenKind::Eq | TokenKind::Neq | TokenKind::Lt | TokenKind::Gt
-            | TokenKind::Lte | TokenKind::Gte => {
+            TokenKind::Eq
+            | TokenKind::Neq
+            | TokenKind::Lt
+            | TokenKind::Gt
+            | TokenKind::Lte
+            | TokenKind::Gte => {
                 self.advance();
                 let right = self.parse_primary()?;
                 left = match op {
@@ -214,7 +233,7 @@ impl Parser {
     fn parse_primary(&mut self) -> Result<Expression, String> {
         match self.peek().kind {
             TokenKind::IntLiteral => {
-                let val = self.advance().lexeme.parse().unwrap();
+                let val = self.advance().lexeme.parse().map_err(|e| format!("Invalid integer literal: {}", e))?;
                 Ok(Expression::IntLiteral(val))
             }
             TokenKind::StringLiteral => {
@@ -222,7 +241,7 @@ impl Parser {
                 Ok(Expression::StringLiteral(val))
             }
             TokenKind::FloatLiteral => {
-                let val = self.advance().lexeme.parse().unwrap();
+                let val = self.advance().lexeme.parse().map_err(|e| format!("Invalid float literal: {}", e))?;
                 Ok(Expression::FloatLiteral(val))
             }
             TokenKind::BoolLiteral => {
@@ -236,7 +255,7 @@ impl Parser {
             TokenKind::LParen => {
                 self.advance();
                 let expr = self.parse_expression()?;
-                self.expect(TokenKind::RParen)?;
+                self.expect_token(TokenKind::RParen)?;
                 Ok(expr)
             }
             _ => Err(format!("Unexpected token: {:?}", self.peek().kind)),

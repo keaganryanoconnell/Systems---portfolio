@@ -15,8 +15,9 @@ impl<'a> QueryExecutor<'a> {
     pub fn execute(&mut self, plan: &QueryPlan) -> SqlResult {
         match plan {
             QueryPlan::CreateTable { table, columns } => {
-                let cols: Vec<ColumnInfo> = columns.iter().map(|(name, col_type)| {
-                    ColumnInfo {
+                let cols: Vec<ColumnInfo> = columns
+                    .iter()
+                    .map(|(name, col_type)| ColumnInfo {
                         name: name.clone(),
                         col_type: match col_type.as_str() {
                             "Int" => ColumnType::Int,
@@ -26,8 +27,8 @@ impl<'a> QueryExecutor<'a> {
                             _ => ColumnType::Text,
                         },
                         nullable: true,
-                    }
-                }).collect();
+                    })
+                    .collect();
 
                 let schema = self.catalog.get_table(table);
                 if schema.is_some() {
@@ -39,9 +40,13 @@ impl<'a> QueryExecutor<'a> {
                     };
                 }
 
-                let col_defs: Vec<ColumnDef> = columns.iter().map(|(name, col_type)| {
-                    ColumnDef { name: name.clone(), col_type: col_type.clone() }
-                }).collect();
+                let col_defs: Vec<ColumnDef> = columns
+                    .iter()
+                    .map(|(name, col_type)| ColumnDef {
+                        name: name.clone(),
+                        col_type: col_type.clone(),
+                    })
+                    .collect();
 
                 self.catalog.create_table(table, cols);
 
@@ -59,24 +64,35 @@ impl<'a> QueryExecutor<'a> {
                     columns: vec![],
                     rows: vec![],
                     affected_rows: if existed { 1 } else { 0 },
-                    error: if existed { None } else { Some(format!("Table '{}' does not exist", table)) },
+                    error: if existed {
+                        None
+                    } else {
+                        Some(format!("Table '{}' does not exist", table))
+                    },
                 }
             }
 
             QueryPlan::Insert { table, .. } => {
                 let schema = match self.catalog.get_table(table) {
                     Some(s) => s,
-                    None => return SqlResult {
-                        columns: vec![],
-                        rows: vec![],
-                        affected_rows: 0,
-                        error: Some(format!("Table '{}' does not exist", table)),
-                    },
+                    None => {
+                        return SqlResult {
+                            columns: vec![],
+                            rows: vec![],
+                            affected_rows: 0,
+                            error: Some(format!("Table '{}' does not exist", table)),
+                        }
+                    }
                 };
 
-                let col_defs: Vec<ColumnDef> = schema.columns.iter().map(|c| {
-                    ColumnDef { name: c.name.clone(), col_type: format!("{:?}", c.col_type) }
-                }).collect();
+                let col_defs: Vec<ColumnDef> = schema
+                    .columns
+                    .iter()
+                    .map(|c| ColumnDef {
+                        name: c.name.clone(),
+                        col_type: format!("{:?}", c.col_type),
+                    })
+                    .collect();
 
                 SqlResult {
                     columns: col_defs,
@@ -89,22 +105,33 @@ impl<'a> QueryExecutor<'a> {
             QueryPlan::Select { table, columns, .. } => {
                 let schema = match self.catalog.get_table(table) {
                     Some(s) => s,
-                    None => return SqlResult {
-                        columns: vec![],
-                        rows: vec![],
-                        affected_rows: 0,
-                        error: Some(format!("Table '{}' does not exist", table)),
-                    },
+                    None => {
+                        return SqlResult {
+                            columns: vec![],
+                            rows: vec![],
+                            affected_rows: 0,
+                            error: Some(format!("Table '{}' does not exist", table)),
+                        }
+                    }
                 };
 
                 let col_defs: Vec<ColumnDef> = if columns.contains(&"*".to_string()) {
-                    schema.columns.iter().map(|c| {
-                        ColumnDef { name: c.name.clone(), col_type: format!("{:?}", c.col_type) }
-                    }).collect()
+                    schema
+                        .columns
+                        .iter()
+                        .map(|c| ColumnDef {
+                            name: c.name.clone(),
+                            col_type: format!("{:?}", c.col_type),
+                        })
+                        .collect()
                 } else {
-                    columns.iter().map(|n| {
-                        ColumnDef { name: n.clone(), col_type: "Text".into() }
-                    }).collect()
+                    columns
+                        .iter()
+                        .map(|n| ColumnDef {
+                            name: n.clone(),
+                            col_type: "Text".into(),
+                        })
+                        .collect()
                 };
 
                 SqlResult {

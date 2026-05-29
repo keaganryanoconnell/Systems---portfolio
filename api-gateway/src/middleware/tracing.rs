@@ -11,9 +11,8 @@ pub async fn trace_middleware(request: Request<Body>, next: Next) -> Response {
         .unwrap_or_else(|| Uuid::new_v4().as_u128());
 
     let mut response = next.run(request).await;
-    response.headers_mut().insert(
-        "x-trace-id",
-        Uuid::from_u128(trace_id).to_string().parse().unwrap(),
-    );
+    if let Ok(val) = axum::http::HeaderValue::from_str(&Uuid::from_u128(trace_id).to_string()) {
+        response.headers_mut().insert("x-trace-id", val);
+    }
     response
 }
