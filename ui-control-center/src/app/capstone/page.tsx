@@ -8,6 +8,7 @@ export default function CapstonePage() {
   const [fps, setFps] = useState(60);
   const [heapUsed, setHeapUsed] = useState(180 * 1024 * 1024);
   const [workers, setWorkers] = useState(["QUERY", "IDLE", "PARSE", "IDLE"]);
+  const [peerCount] = useState(3);
   const [uptime] = useState("4h 23m");
 
   useEffect(() => {
@@ -19,10 +20,7 @@ export default function CapstonePage() {
       });
       setWorkers(prev => prev.map(() => {
         const r = Math.random();
-        if (r < 0.3) return "IDLE";
-        if (r < 0.6) return "QUERY";
-        if (r < 0.85) return "PARSE";
-        return "IDLE";
+        if (r < 0.3) return "IDLE"; if (r < 0.6) return "QUERY"; if (r < 0.85) return "PARSE"; return "IDLE";
       }));
     }, 1000);
     return () => clearInterval(interval);
@@ -31,12 +29,8 @@ export default function CapstonePage() {
   return (
     <div className="h-screen w-screen flex flex-col bg-bg text-text overflow-hidden select-none">
       <CapstoneHeader
-        fps={fps}
-        heapUsed={heapUsed}
-        heapMax={256}
-        workers={workers}
-        peerCount={3}
-        uptime={uptime}
+        fps={fps} heapUsed={heapUsed} heapMax={256}
+        workers={workers} peerCount={peerCount} uptime={uptime}
       />
       <CapstonePanels />
     </div>

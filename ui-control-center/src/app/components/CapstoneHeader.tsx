@@ -1,17 +1,13 @@
 "use client";
 
-import { Activity, Cpu, HardDrive, Layers } from "lucide-react";
+import { Activity, Cpu, HardDrive, Layers, Wifi } from "lucide-react";
 
-interface CapstoneHeaderProps {
-  fps: number;
-  heapUsed: number;
-  heapMax: number;
-  workers: string[];
-  peerCount: number;
-  uptime: string;
-}
-
-export default function CapstoneHeader({ fps, heapUsed, heapMax, workers, peerCount, uptime }: CapstoneHeaderProps) {
+export default function CapstoneHeader({
+  fps, heapUsed, heapMax, workers, peerCount, uptime,
+}: {
+  fps: number; heapUsed: number; heapMax: number;
+  workers: string[]; peerCount: number; uptime: string;
+}) {
   const heapPct = Math.min(100, (heapUsed / heapMax) * 100);
   const activeWorkers = workers.filter(w => w !== "IDLE").length;
 
@@ -23,6 +19,9 @@ export default function CapstoneHeader({ fps, heapUsed, heapMax, workers, peerCo
           SPATIAL<span className="text-text-soft">_ANALYTICS_ENGINE</span>
         </h1>
         <span className="text-[9px] font-mono text-text-muted border border-border px-2 py-0.5 rounded">v0.1.0</span>
+        <span className="text-[8px] font-mono text-text-muted hidden sm:inline">
+          16 Crates · 85+ Tests · 0 Clippy
+        </span>
       </div>
 
       <div className="flex items-center gap-5 text-[10px] font-mono">
@@ -48,18 +47,15 @@ export default function CapstoneHeader({ fps, heapUsed, heapMax, workers, peerCo
           <span className="text-text font-bold">{activeWorkers}/{workers.length}</span>
           <div className="flex gap-0.5 ml-1">
             {workers.map((s, i) => (
-              <span
-                key={i}
-                className={`w-1.5 h-1.5 rounded-full ${
-                  s === "IDLE" ? "bg-border" : s.includes("QUERY") ? "bg-green animate-pulse-subtle" : "bg-gold"
-                }`}
-              />
+              <span key={i} className={`w-1.5 h-1.5 rounded-full ${
+                s === "IDLE" ? "bg-border" : s.includes("QUERY") ? "bg-green animate-pulse-subtle" : "bg-gold"
+              }`} />
             ))}
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 pl-3 border-l border-border">
-          <Layers size={12} className="text-purple" />
+          <Wifi size={12} className="text-purple" />
           <span className="text-text-muted">PEERS:</span>
           <span className="text-text font-bold">{peerCount}</span>
           <span className="text-text-muted">· {uptime}</span>
