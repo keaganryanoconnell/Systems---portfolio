@@ -124,6 +124,43 @@ Blocked syscalls:
 Why BPF instead of syscall interposition (LD_PRELOAD):
 BPF runs in the kernel before the syscall executes — it cannot be bypassed. LD_PRELOAD intercepts libc calls in userspace — a statically linked binary or raw syscall instruction (int 0x80 / syscall instruction) bypasses it. BPF is the only way to guarantee syscall filtering at the kernel boundary.`,
   },
+  {
+    title: "Integrating 12 Crates into a Unified Distributed Platform",
+    summary: "How the entire workspace was unified from isolated crates into a single distributed SQL database and compute platform with a common IPC protocol, API gateway, and Docker Compose deployment.",
+    content: `The final integration phase unified 8 previously isolated Rust crates into a single 12-crate distributed platform.
+
+Before integration:
+• 8 crates with only 1 shared dependency (core-sys)
+• Zero runtime cross-crate communication (except one raw HTTP endpoint)
+• Each crate defined its own incompatible message format
+• No shared protocol, no shared types, no service discovery
+
+After integration:
+• 12 crates, ALL depending on common-protocol
+• Unified 30-byte binary frame protocol with 20 message types
+• API Gateway routing SQL queries, compute jobs, cluster health checks
+• SQL engine parsing and executing queries against LSM storage
+• 10-service Docker Compose deployment with health checks
+
+The integration layer (common-protocol):
+• Frame format: [4B magic=0xCAFEBEEF][4B len][2B ver][4B type][16B trace_id][bincode body]
+• 20 MessageType enum variants covering every cross-crate operation
+• MessageEnvelope with trace_id for distributed tracing propagation
+• FrameDecoder with 16MB max frame size and buffer overflow protection
+
+How the crates interlock at runtime:
+1. Client → TLS → API Gateway (axum on port 443)
+2. API Gateway → common-protocol → SQL Engine (parse → plan → execute)
+3. SQL Engine writes → Raft KV cluster (AppendEntries for consensus)
+4. SQL Engine reads → LSM Engine (Get/Put to MemTable → SSTable)
+5. API Gateway → Compute Orchestrator (MacroTask dispatch)
+6. Compute Orchestrator → Container Engine (sandboxed task execution)
+7. Raft KV → Log Broker (transaction audit trail)
+8. All nodes report → SWIM Gossip (decentralized membership)
+
+The system can be deployed with a single command:
+docker compose up -d`,
+  },
 ];
 
 export default function DeepDives() {

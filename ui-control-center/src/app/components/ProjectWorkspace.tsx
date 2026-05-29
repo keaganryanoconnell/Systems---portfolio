@@ -70,6 +70,94 @@ export default function ProjectWorkspace({
       ]
     },
     {
+      id: "protocol",
+      title: "Common IPC Protocol",
+      subtitle: "Unified Binary Frame Protocol & Shared Types",
+      category: "Messaging & Protocols",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/common-protocol",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Layers,
+      color: "blue",
+      themeColor: "#58a6ff",
+      stats: { loc: "1.1K", coverage: "95%", size: "420KB", threads: "N/A" },
+      githubUrl: "https://github.com",
+      description: "The unified inter-process communication layer connecting all 12 workspace crates. A 30-byte binary frame protocol with magic-byte validation, 20 message types covering SQL/Raft/Storage/Compute, and distributed trace ID propagation.",
+      highlights: [
+        "30-byte frame: [4B magic][4B len][2B ver][4B type][16B trace_id][bincode payload]",
+        "20 MessageType variants: SqlQuery, RaftAppend, StoragePut, ComputeTask, BrokerProduce, etc.",
+        "MessageEnvelope with trace_id propagation for distributed tracing across network hops",
+        "FrameDecoder with 16MB max frame size, buffer overflow protection, magic validation",
+        "Shared types: AppendEntriesArgs, PutRequest, MacroTask, NodeTelemetry, SqlQuery/Result"
+      ]
+    },
+    {
+      id: "gateway",
+      title: "API Gateway & Reverse Proxy",
+      subtitle: "HTTP/TLS 1.3 with axum on tokio",
+      category: "Networking & Consensus",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/api-gateway",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Network,
+      color: "purple",
+      themeColor: "#8b5cf6",
+      stats: { loc: "1.0K", coverage: "N/A", size: "500KB", threads: "tokio async" },
+      githubUrl: "https://github.com",
+      description: "The public entry point for the entire distributed platform. An axum-based HTTP/TLS 1.3 server that routes SQL queries to the sql-engine, compute jobs to the orchestrator, and exposes cluster health, metrics, and telemetry endpoints.",
+      highlights: [
+        "8 REST routes: /v1/sql/query, /v1/jobs, /v1/cluster/nodes, /v1/cluster/health, /v1/metrics",
+        "axum on tokio with CORS middleware and TraceLayer for request/response logging",
+        "trace_id propagation via x-trace-id header for end-to-end distributed tracing",
+        "Health check endpoints: /health (liveness), /ready (readiness)",
+        "Prometheus-compatible /v1/metrics scraping endpoint"
+      ]
+    },
+    {
+      id: "sql",
+      title: "SQL Query Engine & Parser",
+      subtitle: "Recursive Descent Parser + Query Planner + Executor",
+      category: "Data & Storage",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/sql-engine",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Terminal,
+      color: "blue",
+      themeColor: "#58a6ff",
+      stats: { loc: "1.5K", coverage: "N/A", size: "600KB", threads: "N/A" },
+      githubUrl: "https://github.com",
+      description: "A recursive descent SQL parser and query engine. Tokenizes SQL input into 25 token types, builds an AST with 6 statement variants and 14 expression types, plans queries via a QueryPlanner, and executes them against an in-memory Catalog.",
+      highlights: [
+        "Recursive descent parser: SELECT, INSERT, CREATE TABLE, DROP, DELETE, UPDATE",
+        "25 token types: keywords, identifiers, string/int/float/bool literals, operators",
+        "14 AST expression types: Column, Eq, Neq, Lt, Gt, And, Or, literals, etc.",
+        "QueryPlanner: Statement → QueryPlan (6 variant types)",
+        "QueryExecutor with Catalog: CREATE TABLE writes schema, SELECT reads data"
+      ]
+    },
+    {
+      id: "orchestrator",
+      title: "Cloud Compute Orchestrator",
+      subtitle: "Actor Model, SWIM Gossip & OpenTelemetry",
+      category: "Distributed Systems",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/compute-orchestrator",
+      status: "SIMULATED",
+      lang: "Rust",
+      icon: Cpu,
+      color: "gold",
+      themeColor: "#d2991d",
+      stats: { loc: "2.2K", coverage: "85%", size: "1.8MB", threads: "tokio tasks" },
+      githubUrl: "https://github.com",
+      description: "A cloud-native distributed compute layer. Implements an actor-driven concurrency model with tokio tasks and mpsc mailboxes, SWIM gossip protocol for decentralized cluster membership, task scheduling with workload splitting, and OpenTelemetry tracing.",
+      highlights: [
+        "Actor system: tokio::spawn tasks with mpsc::channel mailboxes, ProcessId addressing",
+        "SWIM gossip: Ping/Ack/PingReq protocol, Alive/Suspect/Dead states, metadata dissemination",
+        "Task scheduler: MacroTask → MicroTask splitter, resource-aware node placement scoring",
+        "OpenTelemetry OTLP export with tonic, distributed trace context propagation",
+        "Docker multi-stage build (scratch, ~8MB) + Terraform IaC (VPC, EC2, SG) + GitHub Actions CD"
+      ]
+    },
+    {
       id: "broker",
       title: "Distributed Log Broker",
       subtitle: "Lock-Free SPSC Ring Buffers & Binary TCP Protocol",
@@ -139,7 +227,7 @@ export default function ProjectWorkspace({
       title: "LSM SQL Storage Engine",
       subtitle: "Interactive B+Tree Page Map & LSM Compaction",
       category: "Data & Storage",
-      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/core-sys",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/lsm-engine",
       status: "SIMULATED",
       lang: "Rust",
       icon: Layers,

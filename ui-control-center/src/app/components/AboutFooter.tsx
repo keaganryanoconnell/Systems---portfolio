@@ -59,39 +59,39 @@ export function About() {
           <ul className="space-y-2 text-xs font-mono text-text-soft">
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-green" />
-              <span>Container Engine — Namespace isolation, cgroups v2, seccomp BPF</span>
+              <span>Container Runtime — Linux namespace isolation, cgroups v2, seccomp-BPF</span>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-              <span>Distributed Log Broker — Segmented append logs, lock-free SPSC buffer, binary TCP</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple" />
-              <span>Platform Nodes — Raft log consensus, SWIM Gossip membership over UDP</span>
+              <span>Distributed Log Broker — Segmented append logs, lock-free SPSC buffer, mio event loop</span>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-blue" />
-              <span>LSM Storage &amp; SQL Engine — MemTable compaction pipeline, relational query parser</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-cyan" />
-              <span>Custom UNIX Shell — dup2 pipe chaining, environment expansions, async job reapers</span>
-            </li>
-            <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
-              <span>Bitcask KV Database — Memory-mapped log-structured files, KeyDir index, background merge</span>
+              <span>Common IPC Protocol — 30-byte binary frames, 20 message types, trace ID propagation</span>
             </li>
             <li className="flex items-center gap-2">
               <span className="w-1.5 h-1.5 rounded-full bg-purple" />
-              <span>Async Systems Runtime — epoll Reactor event loop, work-stealing thread-pool Executor</span>
+              <span>API Gateway — HTTP/TLS 1.3 entry point, 8 REST routes, axum on tokio</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              <span>Control Center Workspace — Next.js, React 19, Tailwind v4, xterm.js terminal CLI</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-blue" />
+              <span>SQL Query Engine — Recursive descent parser, AST, query planner, executor</span>
             </li>
             <li className="flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red" />
-              <span>Distributed Key-Value Store — Raft consensus, FSM replication, election timeouts, split-brain healing</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span>Compute Orchestrator — Actor model, SWIM gossip, task scheduling, OpenTelemetry</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-green" />
+              <span>LSM Storage Engine — MemTable/SSTable/compaction, key-value + SQL queries</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple" />
+              <span>Raft Distributed KV — Consensus replication, leader election, split-brain healing</span>
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-gold" />
+              <span>Control Center Workspace — Next.js 15, React 19, Tailwind v4, 58 unit tests</span>
             </li>
           </ul>
         </div>

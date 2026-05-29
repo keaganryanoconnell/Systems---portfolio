@@ -10,18 +10,23 @@ interface NodeSpec {
 
 const NODE_SPECS: NodeSpec[] = [
   { label: "Control Center", sub: "Next.js · React 19 · Tailwind v4", color: "#58a6ff" },
-  { label: "Container Engine", sub: "Rust · Linux · Namespaces · cgroups v2", color: "#3fb950" },
-  { label: "Platform Nodes", sub: "Rust · LSM Storage · SWIM Gossip", color: "#8b5cf6" },
+  { label: "API Gateway", sub: "Rust · Axum · TLS 1.3 · 8 Routes", color: "#8b5cf6" },
+  { label: "SQL Engine", sub: "Rust · Parser · Planner · Executor", color: "#58a6ff" },
+  { label: "Common Protocol", sub: "Rust · Binary Frames · 20 Types", color: "#3fb950" },
+  { label: "Container Engine", sub: "Rust · Namespaces · cgroups v2", color: "#3fb950" },
   { label: "Log Broker", sub: "Rust · mio · Lock-free SPSC", color: "#d2991d" },
-  { label: "Core Systems", sub: "Rust · SPSC Queue · Zero-alloc Logger", color: "#58a6ff" },
-  { label: "Admin Tools", sub: "Rust · TUI · TCP Client · JSON Parser", color: "#8b5cf6" },
-  { label: "Compute Orchestrator", sub: "Rust · Actor Model · OpenTelemetry", color: "#3fb950" },
-  { label: "Tauri Desktop", sub: "Rust · Tauri 1.5 · IPC Bridge", color: "#d2991d" },
+  { label: "Platform Nodes", sub: "Rust · LSM Storage · SWIM Gossip", color: "#8b5cf6" },
+  { label: "Compute Orchestrator", sub: "Rust · Actor Model · Telemetry", color: "#3fb950" },
+  { label: "Raft KV", sub: "Rust · Consensus · Replication", color: "#d2991d" },
+  { label: "LSM Engine", sub: "Rust · MemTable · SSTable", color: "#58a6ff" },
+  { label: "Core Systems", sub: "Rust · SPSC Queue · Logger", color: "#58a6ff" },
+  { label: "Tauri Desktop", sub: "Rust · Tauri 1.5 · IPC", color: "#d2991d" },
 ];
 
 const EDGES: [number, number][] = [
-  [0, 1], [0, 2], [0, 3], [1, 4], [2, 4],
-  [2, 5], [0, 7], [0, 6], [6, 2],
+  [0, 1], [1, 2], [1, 7], [2, 3], [3, 4], [3, 5],
+  [3, 6], [3, 9], [7, 8], [4, 10], [6, 10], [0, 11],
+  [5, 10], [8, 10],
 ];
 
 const CANVAS_W = 800;
