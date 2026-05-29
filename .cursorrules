@@ -1,0 +1,22 @@
+# Cursor Rules — Systems Engineering Portfolio
+
+## Build Commands
+```bash
+# Rust check all crates except Linux-only
+cargo check --workspace --all-features --exclude platform-nodes --exclude container-engine
+
+# Rust tests
+cargo test --workspace --all-features --exclude platform-nodes --exclude container-engine
+
+# Frontend
+cd ui-control-center && npm run build
+cd ui-control-center && npm test
+```
+
+## Rules
+- Always `cargo fmt` before committing
+- Never use unwrap/expect/panic in Rust `src/`
+- Never add GPL/AGPL crates (denied by deny.toml)
+- New Rust crates: edition 2021, MIT license, description field
+- New UI components: "use client", TypeScript, Tailwind v4 classes
+- Frontend simulated data: useState + setInterval pattern
