@@ -7,6 +7,9 @@ description = "Cloud-native distributed compute layer — actor-driven compute e
 
 [dependencies]
 tokio = { version = "1", features = ["full"] }
+rustls = { version = "0.23", features = ["ring"] }
+tokio-rustls = "0.26"
+rustls-pemfile = "2"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["json", "env-filter"] }
 opentelemetry = "0.27"

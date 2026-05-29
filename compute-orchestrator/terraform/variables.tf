@@ -16,10 +16,16 @@ variable "node_count" {
   default     = 3
 }
 
-variable "image_tag" {
-  description = "Docker image tag to deploy"
+variable "image_digest" {
+  description = "Docker image SHA256 digest to pin deployment"
   type        = string
   default     = "latest"
+}
+
+variable "allowed_ssh_cidr" {
+  description = "CIDR block allowed to SSH into instances"
+  type        = string
+  default     = "10.0.0.0/8"
 }
 
 terraform {

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
+use tracing::{error, info, warn};
 use std::net::SocketAddr;
 use std::sync::Arc;
 
@@ -91,7 +92,7 @@ impl BrokerServer {
                 Ok((mut stream, addr)) => {
                     if self.next_token >= MAX_CONNECTIONS + CONNECTION_START_TOKEN {
                         let _ = stream.shutdown(std::net::Shutdown::Both);
-                        eprintln!("[server] max connections reached, rejecting {}", addr);
+                        warn!("[server] max connections reached, rejecting {}", addr);
                         continue;
                     }
 
@@ -103,7 +104,7 @@ impl BrokerServer {
                             .registry()
                             .register(&mut stream, token, Interest::READABLE)
                     {
-                        eprintln!("[server] failed to register connection {}: {}", addr, e);
+                        error!("[server] failed to register connection {}: {}", addr, e);
                         continue;
                     }
 
@@ -116,7 +117,7 @@ impl BrokerServer {
                     };
 
                     self.connections.lock().insert(token, conn);
-                    eprintln!("[server] connection accepted: {} (token={})", addr, token.0);
+                    info!("[server] connection accepted: {} (token={})", addr, token.0);
                 }
                 Err(ref e) if e.kind() == io::ErrorKind::WouldBlock => {
                     break;
@@ -142,7 +143,7 @@ impl BrokerServer {
 
             let bytes_read = match conn.stream.read(&mut conn.read_buffer) {
                 Ok(0) => {
-                    eprintln!("[server] connection closed by client: {}", conn.addr);
+                    info!("[server] connection closed by client: {}", conn.addr);
                     remove_connection = true;
                     0
                 }
@@ -155,7 +156,7 @@ impl BrokerServer {
                     0
                 }
                 Err(e) => {
-                    eprintln!("[server] read error from {}: {}", conn.addr, e);
+                    warn!("[server] read error from {}: {}", conn.addr, e);
                     remove_connection = true;
                     0
                 }
@@ -174,7 +175,7 @@ impl BrokerServer {
             let frames = match conn.decoder.feed_bytes(&conn.read_buffer[..bytes_read]) {
                 Ok(f) => f,
                 Err(e) => {
-                    eprintln!("[server] frame decode error from {}: {}", conn.addr, e);
+                    error!("[server] frame decode error from {}: {}", conn.addr, e);
                     drop(connections);
                     self.remove_connection(token);
                     return Ok(());
@@ -188,11 +189,11 @@ impl BrokerServer {
                             conn.write_buffer.extend_from_slice(&encoded);
                         }
                         Err(e) => {
-                            eprintln!("[server] encode error for {}: {}", conn.addr, e);
+                            error!("[server] encode error for {}: {}", conn.addr, e);
                         }
                     },
                     Err(e) => {
-                        eprintln!("[server] frame processing error for {}: {}", conn.addr, e);
+                        error!("[server] frame processing error for {}: {}", conn.addr, e);
                         let error_frame = Frame::produce_response(0, ERROR_INTERNAL, 0);
                         if let Ok(encoded) = error_frame.encode() {
                             conn.write_buffer.extend_from_slice(&encoded);
@@ -239,7 +240,7 @@ impl BrokerServer {
                     remove_connection = false;
                 }
                 Err(e) => {
-                    eprintln!("[server] write error to {}: {}", conn.addr, e);
+                    warn!("[server] write error to {}: {}", conn.addr, e);
                     remove_connection = true;
                 }
             }
@@ -426,10 +427,7 @@ impl BrokerServer {
         let mut connections = self.connections.lock();
         if let Some(conn) = connections.remove(&token) {
             let _ = conn.stream.shutdown(std::net::Shutdown::Both);
-            eprintln!(
-                "[server] connection removed: {} (token={})",
-                conn.addr, token.0
-            );
+            info!("[server] connection removed: {} (token={})", conn.addr, token.0);
         }
     }
 }

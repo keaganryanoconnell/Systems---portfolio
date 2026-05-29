@@ -20,14 +20,14 @@ impl MessageType {
         }
     }
 
-    pub fn from_u32(n: u32) -> Self {
+    pub fn from_u32(n: u32) -> Option<Self> {
         match n {
-            1 => Self::TaskDispatch,
-            2 => Self::TaskResult,
-            3 => Self::ActorSpawn,
-            4 => Self::ActorStop,
-            5 => Self::Heartbeat,
-            _ => Self::TaskDispatch,
+            1 => Some(Self::TaskDispatch),
+            2 => Some(Self::TaskResult),
+            3 => Some(Self::ActorSpawn),
+            4 => Some(Self::ActorStop),
+            5 => Some(Self::Heartbeat),
+            _ => None,
         }
     }
 }

@@ -4,6 +4,7 @@ use crate::error::{BrokerError, BrokerResult};
 
 pub const MAGIC_BYTES: u32 = 0xCAFEBABE;
 pub const FRAME_HEADER_SIZE: usize = 16;
+const MAX_FRAME_SIZE: usize = 16 * 1024 * 1024;
 
 pub const API_PRODUCE: u16 = 0;
 pub const API_FETCH: u16 = 1;
@@ -194,6 +195,17 @@ impl FrameDecoder {
 
     pub fn feed_bytes(&mut self, data: &[u8]) -> BrokerResult<Vec<Frame>> {
         self.buffer.extend_from_slice(data);
+
+        if self.buffer.len() > MAX_FRAME_SIZE * 2 {
+            self.buffer.clear();
+            self.state = DecodeState::ReadingHeader;
+            self.expected_size = FRAME_HEADER_SIZE;
+            self.header = None;
+            return Err(BrokerError::InvalidFrame(
+                "buffer exceeded maximum size".into(),
+            ));
+        }
+
         let mut frames = Vec::new();
 
         loop {
@@ -225,6 +237,16 @@ impl FrameDecoder {
                         self.buffer[6],
                         self.buffer[7],
                     ]) as usize;
+
+                    if total_len > MAX_FRAME_SIZE {
+                        self.buffer.clear();
+                        self.state = DecodeState::ReadingHeader;
+                        self.expected_size = FRAME_HEADER_SIZE;
+                        self.header = None;
+                        return Err(BrokerError::InvalidFrame(
+                            "total_len exceeds MAX_FRAME_SIZE".into(),
+                        ));
+                    }
 
                     let api_key = u16::from_be_bytes([self.buffer[8], self.buffer[9]]);
                     let api_version = u16::from_be_bytes([self.buffer[10], self.buffer[11]]);

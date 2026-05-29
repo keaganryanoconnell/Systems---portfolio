@@ -80,6 +80,12 @@ jobs:
           command: check
           arguments: --all-features
 
+      # Scan for accidentally committed secrets, API keys, and tokens.
+      - name: Run Secret Scanner
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: .
+
   # ============================================================================
   # STAGE 1-B: Code Style & Compiler Lint Gate
   # ============================================================================
@@ -329,6 +335,14 @@ jobs:
       # The scanner script exits with code 1 on any violation, failing this step.
       - name: Run Static Safety Scanner
         run: python scripts/deny-unwraps.py
+
+      # Audit Rust dependencies for known CVEs and vulnerabilities.
+      - name: Run Cargo Audit (RustSec)
+        run: |
+          if ! command -v cargo-audit &> /dev/null; then
+            cargo install cargo-audit --locked
+          fi
+          cargo audit
 
       # Compile all Criterion benchmark harnesses without running them.
       # Validates that bench code is always kept in sync with the production API.

@@ -17,8 +17,8 @@ vulnerability = "deny"
 unmaintained = "warn"
 # Fail the build if unsound dependency patterns are detected
 unsound = "deny"
-# Ignore specific advisory IDs (left empty for strict compliance)
-ignore = []
+    # Fail if yanked crates are in the dependency tree
+    yanked = "deny"
 
 [licenses]
 # Fail the build for packages that do not declare a license
@@ -57,7 +57,7 @@ exceptions = []
 
 [bans]
 # Fail compilation if multiple versions of the same dependency are detected in tree (duplicates check)
-multiple-versions = "warn"
+    multiple-versions = "deny"
 # Explicitly ban specific unsafe crates
 deny = []
 # Skip checks for specific crates (left empty for strict zero-trust)

@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  packages: write
   id-token: write
 
 concurrency:
@@ -25,6 +24,9 @@ jobs:
     name: Build and Push Docker Image
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -135,10 +137,12 @@ jobs:
     name: Health Check
     needs: terraform-apply
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     steps:
-      - name: Check cluster health
+      - name: Wait for gossip convergence
         run: |
-          echo "Waiting for gossip convergence..."
-          sleep 30
-          echo "Cluster should be healthy within 30 seconds"
+          echo "Waiting 45 seconds for SWIM gossip to converge..."
+          sleep 45
+          echo "Node count: ${{ fromJson(needs.terraform-apply.outputs.node_count || '3') }}"
+          echo "Cluster deployed. Verify via: kubectl get nodes or ssh to instances"
+          echo "Gossip should converge within 30-60 seconds in a 3-node cluster"

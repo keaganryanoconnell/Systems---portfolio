@@ -28,7 +28,7 @@ impl LogBroker {
 
     pub fn start(&self, bind_addr: &str) -> BrokerResult<()> {
         let mut server = BrokerServer::new(Arc::clone(&self.log_manager), bind_addr)?;
-        eprintln!("[broker] listening on {}", bind_addr);
+        tracing::info!("[broker] listening on {}", bind_addr);
         server.run()
     }
 }

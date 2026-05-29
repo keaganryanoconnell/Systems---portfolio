@@ -11,6 +11,9 @@ use std::path::{Path, PathBuf};
 /// Magic footer suffix to identify valid LSM SSTable files (8 bytes).
 const MAGIC_BYTES: &[u8; 8] = b"LSMSSTAB";
 
+const MAX_KEY_LEN: usize = 16 * 1024 * 1024;
+const MAX_VALUE_LEN: usize = 16 * 1024 * 1024;
+
 /// Writes sorted key-value pairs into a binary SSTable file.
 pub struct SstableWriter;
 
@@ -29,7 +32,8 @@ impl SstableWriter {
 
         for (key, val_opt) in entries {
             let key_len = key.len() as u32;
-            let val_len = val_opt.as_ref().map_or(-1, |v| v.len() as i32);
+            let is_tombstone = val_opt.is_none();
+            let val_len = val_opt.as_ref().map_or(0u32, |v| v.len() as u32);
 
             // Store index reference (start of record)
             index.push((key.clone(), current_offset));
@@ -37,8 +41,9 @@ impl SstableWriter {
             // Write data header
             writer.write_all(&key_len.to_be_bytes())?;
             writer.write_all(&val_len.to_be_bytes())?;
+            writer.write_all(&[is_tombstone as u8])?;
             writer.write_all(&key)?;
-            current_offset += 4 + 4 + key_len as u64;
+            current_offset += 4 + 4 + 1 + key_len as u64;
 
             if let Some(val) = val_opt {
                 writer.write_all(&val)?;
@@ -116,6 +121,13 @@ impl SstableReader {
             index_reader.read_exact(&mut len_bytes)?;
             let key_len = u32::from_be_bytes(len_bytes) as usize;
 
+            if key_len > MAX_KEY_LEN {
+                return Err(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    format!("key_len {} exceeds MAX_KEY_LEN", key_len),
+                ));
+            }
+
             let mut key = vec![0u8; key_len];
             index_reader.read_exact(&mut key)?;
 
@@ -153,16 +165,34 @@ impl SstableReader {
 
         let mut key_len_bytes = [0u8; 4];
         file.read_exact(&mut key_len_bytes)?;
-        let key_len = u32::from_be_bytes(key_len_bytes) as i64;
+        let key_len = u32::from_be_bytes(key_len_bytes);
+
+        if key_len > i64::MAX as u32 {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                "key_len exceeds maximum supported value",
+            ));
+        }
 
         let mut val_len_bytes = [0u8; 4];
         file.read_exact(&mut val_len_bytes)?;
-        let val_len = i32::from_be_bytes(val_len_bytes);
+        let val_len = u32::from_be_bytes(val_len_bytes);
+
+        if val_len as usize > MAX_VALUE_LEN {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidData,
+                format!("val_len {} exceeds MAX_VALUE_LEN", val_len),
+            ));
+        }
+
+        let mut tombstone_byte = [0u8; 1];
+        file.read_exact(&mut tombstone_byte)?;
+        let is_tombstone = tombstone_byte[0] != 0;
 
         // Skip the key bytes to reach the value bytes
-        file.seek(SeekFrom::Current(key_len))?;
+        file.seek(SeekFrom::Current(key_len as i64))?;
 
-        if val_len < 0 {
+        if is_tombstone {
             Ok(Some(None))
         } else {
             let mut val = vec![0u8; val_len as usize];
@@ -205,15 +235,19 @@ impl SstableReader {
 
             let mut val_len_bytes = [0u8; 4];
             reader.read_exact(&mut val_len_bytes)?;
-            let val_len = i32::from_be_bytes(val_len_bytes);
+            let val_len = u32::from_be_bytes(val_len_bytes) as usize;
+
+            let mut tombstone_byte = [0u8; 1];
+            reader.read_exact(&mut tombstone_byte)?;
+            let is_tombstone = tombstone_byte[0] != 0;
 
             let mut key = vec![0u8; key_len];
             reader.read_exact(&mut key)?;
 
-            let value = if val_len < 0 {
+            let value = if is_tombstone {
                 None
             } else {
-                let mut val = vec![0u8; val_len as usize];
+                let mut val = vec![0u8; val_len];
                 reader.read_exact(&mut val)?;
                 Some(val)
             };

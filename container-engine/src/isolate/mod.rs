@@ -41,8 +41,12 @@ pub fn isolate(config: &ContainerConfig) -> ContainerResult<IsolatedProcess> {
     // Allocate a stack for the child
     let mut stack = vec![0u8; STACK_SIZE];
 
-    // Arguments to pass to the child closure
-    let cfg_ptr = config as *const ContainerConfig;
+    // Clone config onto the heap so the pointer survives the clone() boundary.
+    // clone() returns the child PID in the parent immediately; the parent's stack
+    // frame could be reused before the child reads the pointer. Boxing puts the
+    // config on the heap with a stable address.
+    let config_box = Box::new(config.clone());
+    let cfg_ptr = Box::into_raw(config_box) as *const ContainerConfig;
 
     let child_pid = clone(
         Box::new(move || child_entry(cfg_ptr)),
@@ -67,8 +71,10 @@ pub fn isolate(config: &ContainerConfig) -> ContainerResult<IsolatedProcess> {
 /// filesystem isolation, cgroups, and security setup (which happen
 /// in the second stage inside PID 1 init).
 fn child_entry(config_ptr: *const ContainerConfig) -> isize {
-    // Safety: config_ptr is valid for the lifetime of the clone call.
-    let config = unsafe { &*config_ptr };
+    // Safety: config_ptr was heap-allocated via Box::into_raw in isolate().
+    // The pointer is valid for the lifetime of the container process.
+    // We reconstruct the Box to ensure proper deallocation when it goes out of scope.
+    let config = unsafe { Box::from_raw(config_ptr as *mut ContainerConfig) };
 
     // --- Stage 1: Inside new namespaces ---
     // Now we are PID 1 in the new PID namespace.

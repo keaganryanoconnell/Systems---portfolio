@@ -53,7 +53,11 @@ impl ActorSystem {
         F: Fn(ActorMessage) -> Fut + Send + Sync + 'static,
         Fut: std::future::Future<Output = ()> + Send + 'static,
     {
-        let actor_id = self.next_id.fetch_add(1, Ordering::Relaxed);
+        if mailbox_size == 0 || mailbox_size > 65535 {
+            panic!("mailbox_size must be in range 1..65536, got {}", mailbox_size);
+        }
+
+        let actor_id = self.next_id.fetch_add(1, Ordering::SeqCst);
         let pid = ProcessId::new(self.node_id, actor_id);
         let (tx, mut rx) = mpsc::channel::<ActorMessage>(mailbox_size);
 
@@ -130,11 +134,11 @@ impl ActorSystem {
                 }
             }
 
-            let mut st = states.lock().await;
-            st.insert(actor_id, ActorState::Stopped);
-
             let mut actors = actors.lock().await;
             actors.remove(&actor_id);
+
+            let mut st = states.lock().await;
+            st.insert(actor_id, ActorState::Stopped);
 
             info!("Actor {}:{} stopped", node_id, actor_id);
         });

@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 use crate::error::{BrokerError, BrokerResult};
 
 const DEFAULT_MAX_SEGMENT_SIZE: u64 = 512 * 1024 * 1024;
+const MAX_KEY_LEN: usize = 1 * 1024 * 1024;
+const MAX_VALUE_LEN: usize = 16 * 1024 * 1024;
 
 #[derive(Debug, Clone)]
 pub struct SegmentConfig {
@@ -159,6 +161,20 @@ impl SegmentFile {
                 .map_err(|_| BrokerError::CorruptData("invalid value_len bytes".into()))?,
         );
 
+        if key_len as usize > MAX_KEY_LEN {
+            return Err(BrokerError::CorruptData(format!(
+                "key_len {} exceeds MAX_KEY_LEN",
+                key_len
+            )));
+        }
+
+        if value_len as usize > MAX_VALUE_LEN {
+            return Err(BrokerError::CorruptData(format!(
+                "value_len {} exceeds MAX_VALUE_LEN",
+                value_len
+            )));
+        }
+
         let mut key = vec![0u8; key_len as usize];
         let mut value = vec![0u8; value_len as usize];
 
@@ -228,6 +244,10 @@ impl SegmentFile {
                     .try_into()
                     .map_err(|_| BrokerError::CorruptData("invalid value_len".into()))?,
             );
+
+            if key_len as usize > MAX_KEY_LEN || value_len as usize > MAX_VALUE_LEN {
+                break;
+            }
 
             let msg_size = 20u64 + key_len as u64 + value_len as u64;
 

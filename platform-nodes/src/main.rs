@@ -77,7 +77,7 @@ pub mod linux_engine {
                     let mut addr: libc::sockaddr_in = std::mem::zeroed();
                     addr.sin_family = libc::AF_INET as libc::sa_family_t;
                     addr.sin_port = port.to_be();
-                    addr.sin_addr.s_addr = libc::INADDR_ANY;
+                    addr.sin_addr.s_addr = libc::INADDR_LOOPBACK; // 127.0.0.1 — internal metrics, not public
 
                     if libc::bind(
                         fd,
@@ -222,6 +222,8 @@ pub mod linux_engine {
                                                 "HTTP/1.1 200 OK\r\n\
                                                  Content-Type: application/json\r\n\
                                                  Content-Length: {}\r\n\
+                                                 X-Content-Type-Options: nosniff\r\n\
+                                                 X-Frame-Options: DENY\r\n\
                                                  Connection: close\r\n\r\n\
                                                  {}",
                                                 body.len(),
@@ -233,6 +235,8 @@ pub mod linux_engine {
                                                 "HTTP/1.1 404 Not Found\r\n\
                                                  Content-Type: application/json\r\n\
                                                  Content-Length: {}\r\n\
+                                                 X-Content-Type-Options: nosniff\r\n\
+                                                 X-Frame-Options: DENY\r\n\
                                                  Connection: close\r\n\r\n\
                                                  {}",
                                                 body.len(),
@@ -352,6 +356,8 @@ pub mod fallback_engine {
                                                 "HTTP/1.1 200 OK\r\n\
                                                  Content-Type: application/json\r\n\
                                                  Content-Length: {}\r\n\
+                                                 X-Content-Type-Options: nosniff\r\n\
+                                                 X-Frame-Options: DENY\r\n\
                                                  Connection: close\r\n\r\n\
                                                  {}",
                                                 body.len(),
@@ -363,6 +369,8 @@ pub mod fallback_engine {
                                                 "HTTP/1.1 404 Not Found\r\n\
                                                  Content-Type: application/json\r\n\
                                                  Content-Length: {}\r\n\
+                                                 X-Content-Type-Options: nosniff\r\n\
+                                                 X-Frame-Options: DENY\r\n\
                                                  Connection: close\r\n\r\n\
                                                  {}",
                                                 body.len(),

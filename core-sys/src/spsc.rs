@@ -18,17 +18,24 @@ pub struct SpscQueue<T, const N: usize> {
 }
 
 unsafe impl<T: Send, const N: usize> Send for SpscQueue<T, N> {}
+// Safety: Sync is implemented because all mutable access to the buffer is mediated
+// through AtomicUsize indices with Acquire/Release ordering. The queue supports
+// one producer and one consumer — sharing via Arc is safe as long as this contract
+// is maintained. If multiple threads need to consume, wrap in a Mutex.
 unsafe impl<T: Send, const N: usize> Sync for SpscQueue<T, N> {}
 
 impl<T, const N: usize> SpscQueue<T, N> {
     /// Creates a new, empty SpscQueue.
     pub fn new() -> Self {
-        // Safe initialization of const-generic array containing UnsafeCell
-        // Since UnsafeCell and MaybeUninit are transparent wrappers with no drop implementation
-        // on uninitialized states, this is safe and memory-efficient.
-        let buffer = unsafe {
-            let array: MaybeUninit<[UnsafeCell<MaybeUninit<T>>; N]> = MaybeUninit::uninit();
-            array.assume_init()
+        let buffer = {
+            let mut array: MaybeUninit<[UnsafeCell<MaybeUninit<T>>; N]> = MaybeUninit::uninit();
+            let ptr = array.as_mut_ptr();
+            for i in 0..N {
+                unsafe {
+                    (*ptr)[i] = UnsafeCell::new(MaybeUninit::uninit());
+                }
+            }
+            unsafe { array.assume_init() }
         };
 
         Self {

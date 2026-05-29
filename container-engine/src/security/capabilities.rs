@@ -10,11 +10,11 @@ const KEPT_CAPS: &[Capability] = &[
     Capability::CAP_FOWNER,
     Capability::CAP_FSETID,
     Capability::CAP_KILL,
-    Capability::CAP_NET_BIND_SERVICE,
-    Capability::CAP_SETUID,
-    Capability::CAP_SETGID,
-    // Note: CAP_NET_RAW is deliberately omitted — disables ping and raw sockets
-    // Note: CAP_SYS_ADMIN is deliberately omitted — prevents namespace escape
+    // CAP_NET_BIND_SERVICE removed — no container workload needs privileged ports
+    // CAP_SETUID removed — prevents privilege escalation via suid binaries inside container
+    // CAP_SETGID removed — prevents group-based privilege escalation
+    // CAP_SYS_ADMIN deliberately omitted — prevents namespace escape
+    // CAP_NET_RAW deliberately omitted — disables ping and raw sockets
 ];
 
 /// Drops all capabilities except those in KEPT_CAPS from the bounding

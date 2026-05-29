@@ -1,11 +1,12 @@
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::cell::UnsafeCell;
+use std::sync::atomic::{fence, AtomicUsize, Ordering};
 
 use crate::error::BrokerResult;
 
 const RING_CAPACITY: usize = 1 << 20;
 
 pub struct RingBuffer {
-    buffer: Vec<u8>,
+    buffer: UnsafeCell<Vec<u8>>,
     mask: usize,
     head: AtomicUsize,
     tail: AtomicUsize,
@@ -17,7 +18,7 @@ impl RingBuffer {
         let capacity = RING_CAPACITY;
         assert!(capacity.is_power_of_two(), "capacity must be a power of 2");
 
-        let buffer = vec![0u8; capacity];
+        let buffer = UnsafeCell::new(vec![0u8; capacity]);
 
         Self {
             buffer,
@@ -28,7 +29,7 @@ impl RingBuffer {
     }
 
     pub fn capacity(&self) -> usize {
-        self.buffer.len()
+        unsafe { &*self.buffer.get() }.len()
     }
 
     pub fn available_write(&self) -> usize {
@@ -60,9 +61,12 @@ impl RingBuffer {
         let head_idx = head & self.mask;
         let write_len = len.min(self.capacity() - head_idx);
 
-        let buf = &self.buffer;
-        let buf_ptr = buf.as_ptr() as *mut u8;
+        // Safety: UnsafeCell signals interior mutability. The SPSC protocol ensures
+        // that no other thread writes to the region [head_idx..head_idx+write_len]
+        // concurrently. The atomic head/tail indices provide the synchronization.
         unsafe {
+            let buf = &mut *self.buffer.get();
+            let buf_ptr = buf.as_mut_ptr();
             std::ptr::copy_nonoverlapping(data.as_ptr(), buf_ptr.add(head_idx), write_len);
             if write_len < len {
                 std::ptr::copy_nonoverlapping(
@@ -73,7 +77,7 @@ impl RingBuffer {
             }
         }
 
-        std::sync::atomic::compiler_fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.head.store(head.wrapping_add(len), Ordering::Release);
 
         Ok(len)
@@ -97,9 +101,9 @@ impl RingBuffer {
         let tail_idx = tail & self.mask;
         let first_chunk = actual.min(self.capacity() - tail_idx);
 
-        let buf = &self.buffer;
-        let buf_ptr = buf.as_ptr();
         unsafe {
+            let buf = &*self.buffer.get();
+            let buf_ptr = buf.as_ptr();
             std::ptr::copy_nonoverlapping(buf_ptr.add(tail_idx), dest.as_mut_ptr(), first_chunk);
             if first_chunk < actual {
                 std::ptr::copy_nonoverlapping(
@@ -110,7 +114,7 @@ impl RingBuffer {
             }
         }
 
-        std::sync::atomic::compiler_fence(Ordering::SeqCst);
+        fence(Ordering::SeqCst);
         self.tail
             .store(tail.wrapping_add(actual), Ordering::Release);
 
@@ -135,7 +139,13 @@ impl RingBuffer {
         while read_pos != head {
             let idx = read_pos & self.mask;
             let chunk_len = (head.wrapping_sub(read_pos)).min(self.capacity() - idx);
-            let consumed = consume(&self.buffer[idx..idx + chunk_len])?;
+            // Safety: read_pos is bounded by the SPSC protocol — only the consumer thread
+            // advances tail. The data at [idx..idx+chunk_len] is not concurrently written.
+            let slice = unsafe {
+                let buf = &*self.buffer.get();
+                &buf[idx..idx + chunk_len]
+            };
+            let consumed = consume(slice)?;
             total += consumed;
             read_pos = read_pos.wrapping_add(consumed);
             if consumed < chunk_len {
@@ -144,7 +154,7 @@ impl RingBuffer {
         }
 
         if total > 0 {
-            std::sync::atomic::compiler_fence(Ordering::SeqCst);
+            fence(Ordering::SeqCst);
             self.tail.store(tail.wrapping_add(total), Ordering::Release);
         }
 
