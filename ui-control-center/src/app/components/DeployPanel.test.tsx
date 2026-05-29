@@ -11,7 +11,7 @@ describe('DeployPanel', () => {
   it('renders docker compose command hint', () => {
     render(<DeployPanel />);
     expect(screen.getByText(/docker compose up/)).toBeInTheDocument();
-    expect(screen.getByText(/10 services/)).toBeInTheDocument();
+    expect(screen.getByText(/12 services/)).toBeInTheDocument();
     expect(screen.getByText(/3-node Raft cluster/)).toBeInTheDocument();
   });
 
@@ -34,9 +34,9 @@ describe('DeployPanel', () => {
     expect(screen.getByText('CMD')).toBeInTheDocument();
   });
 
-  it('shows 10 services count', () => {
+  it('shows 12 services count', () => {
     render(<DeployPanel />);
-    const serviceCounts = screen.getAllByText('10');
+    const serviceCounts = screen.getAllByText('12');
     expect(serviceCounts.length).toBeGreaterThan(0);
   });
 });
