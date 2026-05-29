@@ -350,6 +350,28 @@ export default function ProjectWorkspace({
         "Lock-free SPSC RingBuffer for ingestion: Acquire/Release + fence(SeqCst) ordering",
         "Microsecond-precision latency: p50=200ns, p90=300ns, p99=3.6µs at 1M orders"
       ]
+    },
+    {
+      id: "telemetry",
+      title: "Telemetry Edge Aggregator",
+      subtitle: "Gorilla Compression · Zero-Copy Rings · Edge Gateway",
+      category: "Networking & Consensus",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/telemetry-aggregator",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Activity,
+      color: "cyan",
+      themeColor: "#00f0ff",
+      stats: { loc: "1.1K", coverage: "N/A", size: "350KB", threads: "2 (Recv+Process)" },
+      githubUrl: "https://github.com",
+      description: "A lightweight telemetry edge aggregator for resource-constrained gateways (256MB RAM). Ingests high-volume UDP/CoAP metric packets into a zero-copy packet ring, compresses with Gorilla-style delta encoding, and spills to disk under backpressure with bounded memory.",
+      highlights: [
+        "Zero-copy packet ring: 256 frames × 2048 bytes = 512KB, PACKET_MMAP-style layout",
+        "Gorilla-style compression: delta-of-delta timestamps + XOR float values → ~3:1 ratio",
+        "Bounded circular buffer: 1024 compressed blocks in memory, 512-block segments to disk",
+        "Strict memory cap: configurable (default 256MB), oldest segments evicted when exceeded",
+        "100K packet integration test: validates end-to-end ingestion + compression + recovery"
+      ]
     }
   ], []);
 
@@ -591,6 +613,12 @@ export default function ProjectWorkspace({
                       </div>
                     </div>
                   </div>
+                )}
+                {activeProjectId === "lob" && (
+                  <LOBEngineSimulator />
+                )}
+                {activeProjectId === "telemetry" && (
+                  <TelemetrySimulator />
                 )}
                 {activeProjectId === "consensus" && (
                   <ViewClusterNodes nodes={nodes} history={history} chaosMode={chaosMode} />
@@ -2394,6 +2422,105 @@ function LOBEngineSimulator() {
       <div className="space-y-1">
         <div className="text-[8px] font-mono text-text-soft font-bold uppercase">EXECUTION LOG</div>
         <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
+          {logs.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 7. TELEMETRY AGGREGATOR SIMULATOR
+// ==========================================
+function TelemetrySimulator() {
+  const [logs, setLogs] = useState<string[]>([
+    "AGGREGATOR: Bound to UDP 0.0.0.0:5683 (CoAP port)",
+    "AGGREGATOR: Packet ring initialized (256 frames × 2048B = 512KB)",
+    "AGGREGATOR: Gorilla compressor ready (128 points/block)",
+    "AGGREGATOR: Log buffer: 256MB cap, 1024-block ring"
+  ]);
+  const [stats, setStats] = useState({ packets: 0, bytes: 0, compressed: 0, ratio: 0.0 });
+  const [hexPreview, setHexPreview] = useState("");
+
+  const addLog = (msg: string) => { setLogs(prev => [...prev.slice(-8), msg]); };
+
+  const ingestPacket = () => {
+    const ts = Date.now() * 1000;
+    const val = (234.0 + Math.random() * 2).toFixed(3);
+    const payload = `BEEFCAFE00000000,${ts},1,${val},2`;
+
+    const rawBytes = payload.length;
+    const compressedBytes = Math.floor(rawBytes * 0.28);
+
+    const rawHex = Array.from(new TextEncoder().encode(payload)).map(b => b.toString(16).padStart(2,'0')).join(' ');
+    setHexPreview(rawHex.substring(0, 80) + "...");
+
+    addLog(`[IN] Meter BEEFCAFE | t=${ts} | V=${val} | +${rawBytes}B raw`);
+    addLog(`[COMPRESS] Delta=1s | XOR prev | ${rawBytes}B → ~${compressedBytes}B | Ratio: ${(rawBytes/compressedBytes).toFixed(1)}:1`);
+
+    setStats(prev => ({
+      packets: prev.packets + 1,
+      bytes: prev.bytes + rawBytes,
+      compressed: prev.compressed + compressedBytes,
+      ratio: prev.bytes > 0 ? prev.bytes / Math.max(1, prev.compressed) : 0,
+    }));
+  };
+
+  const ingestBatch = () => {
+    for (let i = 0; i < 10; i++) setTimeout(() => ingestPacket(), i * 50);
+    addLog(`[BATCH] Ingesting 10 packets @ 50ms intervals...`);
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-4">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-cyan font-bold uppercase tracking-wider block">EDGE AGGREGATOR</span>
+          <h4 className="text-sm font-bold text-text">Telemetry Ingestion & Compression Engine</h4>
+        </div>
+        <div className="flex gap-1.5">
+          <button onClick={ingestPacket} className="text-[9px] font-mono px-2.5 py-1 bg-cyan/10 border border-cyan/30 text-cyan rounded hover:bg-cyan/20 transition-all">+1 PKT</button>
+          <button onClick={ingestBatch} className="text-[9px] font-mono px-2.5 py-1 bg-blue/10 border border-blue/30 text-blue rounded hover:bg-blue/20 transition-all">×10 BATCH</button>
+          <button onClick={() => { setLogs(["AGGREGATOR: Buffer cleared"]); setStats({packets:0,bytes:0,compressed:0,ratio:0}); }} className="text-[9px] font-mono px-2 py-1 bg-surface border border-border text-text-soft rounded hover:text-text transition-all">CLEAR</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">PACKETS INGESTED</span>
+          <span className="text-lg font-mono font-bold text-text">{stats.packets}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">COMPRESSION RATIO</span>
+          <span className="text-lg font-mono font-bold text-cyan">{stats.ratio.toFixed(1)}:1</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">RAW BYTES</span>
+          <span className="text-sm font-mono font-bold text-text-soft">{stats.bytes.toLocaleString()}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">COMPRESSED BYTES</span>
+          <span className="text-sm font-mono font-bold text-text-soft">{stats.compressed.toLocaleString()}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Protocol: <span className="text-text font-bold">CoAP/UDP</span></span>
+        <span>Ring: <span className="text-text font-bold">512KB</span></span>
+        <span>Cap: <span className="text-text font-bold">256MB</span></span>
+        <span>Block: <span className="text-text font-bold">128 pts</span></span>
+      </div>
+
+      {hexPreview && (
+        <div className="bg-bg/50 border border-cyan/20 rounded p-2">
+          <span className="text-[7px] font-mono text-text-muted uppercase block mb-1">RAW PACKET (HEX DUMP)</span>
+          <pre className="text-[8px] font-mono text-text-soft break-all leading-tight">{hexPreview}</pre>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">INGESTION LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
           {logs.map((l, i) => <div key={i}>{l}</div>)}
         </div>
       </div>

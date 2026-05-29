@@ -3,6 +3,7 @@ members = [
     "common-protocol",
     "core-sys",
     "lob-engine",
+    "telemetry-aggregator",
     "lsm-engine",
     "sql-engine",
     "admin-tools",

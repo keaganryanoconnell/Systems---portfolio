@@ -1,0 +1,20 @@
+[package]
+name = "telemetry-aggregator"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Lightweight telemetry edge aggregator for resource-constrained gateways — zero-copy UDP packet ring, Gorilla-style delta-of-delta compression, bounded memory with disk spill"
+
+[dependencies]
+rand = "0.8"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+criterion = { version = "0.5", features = ["html_reports"] }
+tempfile = "3"
+
+[[bench]]
+name = "compression_ratio"
+harness = false
