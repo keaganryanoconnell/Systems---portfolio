@@ -22,7 +22,7 @@ describe('DeepDives', () => {
     fireEvent.click(firstTitle);
 
     await waitFor(() => {
-      expect(screen.getByText(/The container-engine crate is a production-grade/)).toBeInTheDocument();
+      expect(screen.getByText(/clone\(\) syscall with 5 namespace flags/)).toBeInTheDocument();
     });
   });
 
@@ -33,7 +33,7 @@ describe('DeepDives', () => {
     fireEvent.click(title);
 
     await waitFor(() => {
-      expect(screen.queryByText(/The container-engine crate is a production-grade/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/clone\(\) syscall with 5 namespace flags/)).not.toBeInTheDocument();
     });
   });
 
