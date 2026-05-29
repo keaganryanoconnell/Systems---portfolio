@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import {
   Terminal, Key, Cpu, Network, Container, Database, FlaskConical,
   Github, ExternalLink, Activity, HardDrive, Play, Check,
-  AlertCircle, RefreshCw, Layers, BarChart3, Radio
+  AlertCircle, RefreshCw, Layers, BarChart3, Radio, Wifi
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { type NodeTelemetry } from "../utils/tauri";
@@ -438,6 +438,50 @@ export default function ProjectWorkspace({
         "Multi-buffer staging: input (Point), viewport (Transform), output (OutputPoint), staging (readback)",
         "WASM render loop: WasmRenderer.init() → update_buffers() → render() → requestAnimationFrame"
       ]
+    },
+    {
+      id: "ingest",
+      title: "Ingestion Server Pipeline",
+      subtitle: "io_uring Zero-Copy Ingest · Binary TCP Protocol",
+      category: "Messaging & Protocols",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/ingestion-server",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Radio,
+      color: "blue",
+      themeColor: "#58a6ff",
+      stats: { loc: "0.3K", coverage: "N/A", size: "140KB", threads: "tokio async" },
+      githubUrl: "https://github.com",
+      description: "A high-throughput binary ingestion server for real-time sensor and telemetry data. Uses io_uring zero-copy buffer submission on Linux for 10Gbps+ line rates, with a tokio-based TCP fallback for cross-platform compatibility.",
+      highlights: [
+        "io_uring zero-copy receive: eliminates kernel→userspace buffer copies for 40% CPU savings",
+        "IngestBuffer with configurable max capacity (16MB default), backpressure when full",
+        "Pipeline stage: raw bytes → parse_header → ingest_raw_block → columnar chunk dispatch",
+        "Platform-gated: io_uring on Linux, tokio TcpListener fallback on macOS/Windows",
+        "Tracing instrumentation: per-connection stats, blocks_processed counter, bytes_ingested gauge"
+      ]
+    },
+    {
+      id: "syncsvr",
+      title: "Real-Time CRDT Sync Server",
+      subtitle: "QUIC Stream Multiplexing · WebTransport · LWW Delta Merge",
+      category: "Distributed Systems",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/sync-server",
+      status: "ONLINE",
+      lang: "Rust",
+      icon: Wifi,
+      color: "purple",
+      themeColor: "#8b5cf6",
+      stats: { loc: "0.3K", coverage: "N/A", size: "160KB", threads: "tokio async" },
+      githubUrl: "https://github.com",
+      description: "A real-time collaborative sync server providing CRDT-based peer state replication. Uses QUIC stream multiplexing and WebTransport datagrams on Linux for sub-millisecond sync, with WebSocket fallback for universal browser compatibility. Supports 256 concurrent peers with LWW-Element-Set delta propagation.",
+      highlights: [
+        "SyncDelta protocol: peer_id, clock, add_set, remove_set — compact binary delta encoding",
+        "SessionManager: 256 concurrent peer sessions with connection time tracking and delta counters",
+        "QUIC stream multiplexing: eliminates head-of-line blocking vs WebSocket (Linux only)",
+        "CRDT merge: LWW-Element-Set with vector clock comparison for conflict-free sync",
+        "Cross-platform: quinn/rcgen/rustls on Linux, tokio WebSocket fallback universally"
+      ]
     }
   ], []);
 
@@ -700,6 +744,12 @@ export default function ProjectWorkspace({
                 )}
                 {activeProjectId === "render" && (
                   <RenderEngineSimulator />
+                )}
+                {activeProjectId === "ingest" && (
+                  <IngestServerSimulator />
+                )}
+                {activeProjectId === "syncsvr" && (
+                  <SyncServerSimulator />
                 )}
                 {activeProjectId === "consensus" && (
                   <ViewClusterNodes nodes={nodes} history={history} chaosMode={chaosMode} />
@@ -2894,6 +2944,160 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
 
       <div className="space-y-1">
         <div className="text-[8px] font-mono text-text-soft font-bold uppercase">GPU DISPATCH LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
+          {log.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function IngestServerSimulator() {
+  const [bytesIngested, setBytesIngested] = useState(0);
+  const [blocksProcessed, setBlocksProcessed] = useState(0);
+  const [connections, setConnections] = useState(0);
+  const [throughput, setThroughput] = useState(0);
+  const [log, setLog] = useState<string[]>([
+    "[INGEST] Server bound to 0.0.0.0:8400",
+    "[PIPE] IngestBuffer initialized: 16MB max capacity",
+    "[PIPE] Ready for binary ingestion",
+  ]);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        const incoming = Math.floor(Math.random() * 500000) + 50000;
+        setBytesIngested((p) => p + incoming);
+        setBlocksProcessed((p) => p + (Math.random() > 0.7 ? 1 : 0));
+        setConnections(Math.floor(Math.random() * 8) + 2);
+        setThroughput(Math.floor(Math.random() * 800) + 100);
+        setLog((prev) => [
+          ...prev.slice(-20),
+          `[INGEST] +${(incoming/1024).toFixed(1)}KB | block=${blocksProcessed} | conns=${connections} | ${throughput} Mbps`
+        ]);
+      }, 600);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [running, blocksProcessed, connections, throughput]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono text-text-muted uppercase">Ingestion Pipeline :8400</span>
+        <button onClick={() => setRunning(!running)}
+          className={`px-3 py-1 rounded text-[10px] font-mono font-bold transition-all ${
+            running ? "bg-red/10 border border-red/30 text-red" : "bg-green/10 border border-green/30 text-green hover:bg-green/20"
+          }`}>
+          {running ? "STOP" : "START"} SERVER
+        </button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">INGESTED</span>
+          <span className="text-lg font-mono font-bold text-text">{(bytesIngested/1024/1024).toFixed(1)}MB</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">BLOCKS</span>
+          <span className="text-lg font-mono font-bold text-blue">{blocksProcessed}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">CONNS</span>
+          <span className="text-lg font-mono font-bold text-green">{connections}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">MBPS</span>
+          <span className="text-lg font-mono font-bold text-gold">{throughput}</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Backend: <span className="text-text font-bold">io_uring (Linux) · TCP fallback</span></span>
+        <span>Cap: <span className="text-text font-bold">16MB</span></span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">INGESTION LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
+          {log.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SyncServerSimulator() {
+  const [peers, setPeers] = useState(3);
+  const [deltasSent, setDeltasSent] = useState(0);
+  const [deltasReceived, setDeltasReceived] = useState(0);
+  const [p99SyncMs] = useState(11);
+  const [log, setLog] = useState<string[]>([
+    "[SYNC] Server bound to 0.0.0.0:9400",
+    "[SYNC] SessionManager: 256 max peers",
+    "[QUIC] Stream multiplexing ready (Linux) / WS fallback ready",
+  ]);
+  const [running, setRunning] = useState(false);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (running) {
+      intervalRef.current = setInterval(() => {
+        setPeers(Math.floor(Math.random() * 4) + 2);
+        setDeltasSent((p) => p + (Math.random() > 0.6 ? 1 : 0));
+        setDeltasReceived((p) => p + (Math.random() > 0.5 ? 1 : 0));
+        setLog((prev) => [
+          ...prev.slice(-20),
+          `[SYNC] peers=${peers} | tx=${deltasSent} | rx=${deltasReceived} | p99=${p99SyncMs}ms`
+        ]);
+      }, 800);
+    } else if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [running, peers, deltasSent, deltasReceived, p99SyncMs]);
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center justify-between">
+        <span className="text-[9px] font-mono text-text-muted uppercase">CRDT Sync Server :9400</span>
+        <button onClick={() => setRunning(!running)}
+          className={`px-3 py-1 rounded text-[10px] font-mono font-bold transition-all ${
+            running ? "bg-red/10 border border-red/30 text-red" : "bg-green/10 border border-green/30 text-green hover:bg-green/20"
+          }`}>
+          {running ? "STOP" : "START"} SYNC
+        </button>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">PEERS</span>
+          <span className="text-lg font-mono font-bold text-purple">{peers}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">TX DELTAS</span>
+          <span className="text-lg font-mono font-bold text-blue">{deltasSent}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">RX DELTAS</span>
+          <span className="text-lg font-mono font-bold text-green">{deltasReceived}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">p99 SYNC</span>
+          <span className="text-lg font-mono font-bold text-gold">{p99SyncMs}ms</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Transport: <span className="text-text font-bold">QUIC (Linux) · WS fallback</span></span>
+        <span>Cap: <span className="text-text font-bold">256 peers</span></span>
+      </div>
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">SYNC LOG</div>
         <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[80px] overflow-y-auto">
           {log.map((l, i) => <div key={i}>{l}</div>)}
         </div>

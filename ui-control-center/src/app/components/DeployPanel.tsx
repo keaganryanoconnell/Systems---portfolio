@@ -13,6 +13,8 @@ const SERVICES = [
   { name: "compute-orchestrator", port: "9100:9100", status: "healthy", image: "rust:1.85-alpine", desc: "Actor system + SWIM gossip" },
   { name: "container-engine", port: "—", status: "warning", image: "rust:1.85-alpine", desc: "Linux container runtime (privileged)" },
   { name: "admin-tools", port: "—", status: "healthy", image: "rust:1.85-alpine", desc: "TUI dashboard (depends on api-gateway)" },
+  { name: "ingestion-server", port: "8400:8400", status: "healthy", image: "rust:1.85-alpine", desc: "Binary ingestion pipeline (io_uring on Linux)" },
+  { name: "sync-server", port: "9400:9400", status: "healthy", image: "rust:1.85-alpine", desc: "CRDT sync server (QUIC on Linux, WS fallback)" },
 ];
 
 const STATUS_COLORS: Record<string, string> = { healthy: "#3fb950", warning: "#d2991d", error: "#f85149" };
@@ -26,7 +28,7 @@ export default function DeployPanel() {
       </div>
 
       <div className="text-[7px] font-mono text-text-muted">
-        docker compose up -d · 10 services · 3-node Raft cluster
+        docker compose up -d · 12 services · 3-node Raft cluster
       </div>
 
       <div className="space-y-1.5">

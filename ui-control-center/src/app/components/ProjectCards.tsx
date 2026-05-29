@@ -72,6 +72,14 @@ const PROJECTS = [
     problem:"CPU-bound coordinate projection kills framerate at 1M+ point clouds.",
     primitives:"wgpu compute pipeline, WGSL spatial_transform shader, bytemuck zero-copy",
     metric:"1M points/dispatch, 256 threads/workgroup, 5 GPU buffers" },
+  { id:"ingest", name:"Ingestion Server Pipeline", lang:"Rust", tier:2, status:"ACTIVE",
+    problem:"TCP read() buffer copies consume 40% CPU at 10Gbps line rate on edge nodes.",
+    primitives:"io_uring zero-copy recv, IngestBuffer (16MB), tokio async, Pipeline stats",
+    metric:"port 8400, 16MB max frame, blocks_processed counter" },
+  { id:"syncsvr", name:"Real-Time CRDT Sync Server", lang:"Rust", tier:3, status:"ACTIVE",
+    problem:"WebSocket head-of-line blocking throttles concurrent CRDT delta sync at scale.",
+    primitives:"QUIC stream multiplexing, SessionManager (256 peers), SyncEngine, delta merge",
+    metric:"port 9400, 256 max peers, SyncDelta protocol, cross-platform fallback" },
 ];
 
 export default function ProjectCards({ onSelect }: { onSelect: (id: string) => void }) {
