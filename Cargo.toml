@@ -1,6 +1,9 @@
 [workspace]
 members = [
+    "common-protocol",
     "core-sys",
+    "lsm-engine",
+    "sql-engine",
     "admin-tools",
     "platform-nodes",
     "src-tauri",
@@ -8,6 +11,7 @@ members = [
     "log-broker",
     "raft-kv",
     "compute-orchestrator",
+    "api-gateway",
 ]
 resolver = "2"
 

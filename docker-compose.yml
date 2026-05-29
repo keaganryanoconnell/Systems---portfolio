@@ -1,0 +1,118 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: api-gateway/Dockerfile
+    ports:
+      - "443:443"
+      - "8080:8080"
+    environment:
+      - RUST_LOG=api_gateway=info
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  sql-engine:
+    build:
+      context: .
+      dockerfile: sql-engine/Dockerfile
+    depends_on:
+      raft-kv-0:
+        condition: service_healthy
+    environment:
+      - RUST_LOG=sql_engine=info
+
+  raft-kv-0:
+    build:
+      context: .
+      dockerfile: raft-kv/Dockerfile
+    command: --id 0 --bind 0.0.0.0:9000 --peers raft-kv-1:9001,raft-kv-2:9002
+    ports:
+      - "9000:9000"
+    environment:
+      - RUST_LOG=raft_kv=info
+    healthcheck:
+      test: ["CMD", "echo", "healthy"]
+      interval: 10s
+      retries: 3
+    restart: unless-stopped
+
+  raft-kv-1:
+    build:
+      context: .
+      dockerfile: raft-kv/Dockerfile
+    command: --id 1 --bind 0.0.0.0:9001 --peers raft-kv-0:9000,raft-kv-2:9002
+    ports:
+      - "9001:9001"
+    environment:
+      - RUST_LOG=raft_kv=info
+
+  raft-kv-2:
+    build:
+      context: .
+      dockerfile: raft-kv/Dockerfile
+    command: --id 2 --bind 0.0.0.0:9002 --peers raft-kv-0:9000,raft-kv-1:9001
+    ports:
+      - "9002:9002"
+    environment:
+      - RUST_LOG=raft_kv=info
+
+  lsm-engine:
+    build:
+      context: .
+      dockerfile: lsm-engine/Dockerfile
+    environment:
+      - RUST_LOG=lsm_engine=info
+
+  log-broker:
+    build:
+      context: .
+      dockerfile: log-broker/Dockerfile
+    command: start --data-dir /data --bind 0.0.0.0:9092
+    ports:
+      - "9092:9092"
+    volumes:
+      - broker_data:/data
+    environment:
+      - RUST_LOG=info
+    restart: unless-stopped
+
+  compute-orchestrator:
+    build:
+      context: .
+      dockerfile: compute-orchestrator/Dockerfile
+    command: leader --bind 0.0.0.0:9100
+    ports:
+      - "9100:9100"
+      - "7946:7946/udp"
+    environment:
+      - RUST_LOG=compute_orchestrator=info
+    healthcheck:
+      test: ["CMD", "/app", "status"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+
+  container-engine:
+    build:
+      context: .
+      dockerfile: container-engine/Dockerfile
+    privileged: true
+    environment:
+      - RUST_LOG=container_engine=info
+
+  admin-tools:
+    build:
+      context: .
+      dockerfile: admin-tools/Dockerfile
+    depends_on:
+      - api-gateway
+    environment:
+      - API_GATEWAY_URL=http://api-gateway:8080
+
+volumes:
+  broker_data:

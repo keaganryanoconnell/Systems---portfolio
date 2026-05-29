@@ -1,0 +1,11 @@
+[package]
+name = "common-protocol"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Unified IPC frame protocol and shared types for the distributed compute platform — binary framing, message envelopes, SQL/Raft/Storage/Compute/Telemetry type definitions"
+
+[dependencies]
+bincode = "1.3"
+serde = { version = "1", features = ["derive"] }
+uuid = { version = "1", features = ["v4"] }

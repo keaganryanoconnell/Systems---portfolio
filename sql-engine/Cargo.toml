@@ -1,0 +1,11 @@
+[package]
+name = "sql-engine"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "SQL query engine — recursive descent parser, query planner, execution engine for the distributed database platform"
+
+[dependencies]
+common-protocol = { path = "../common-protocol" }
+serde = { version = "1", features = ["derive"] }
+tracing = "0.1"
