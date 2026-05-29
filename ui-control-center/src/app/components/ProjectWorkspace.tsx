@@ -394,6 +394,28 @@ export default function ProjectWorkspace({
         "Boxed UnsafeCell<Vec<Slot>> heap allocation prevents stack overflow at scale",
         "3-producer 1-consumer TSAN test: 30K frames, data-race-free verified"
       ]
+    },
+    {
+      id: "columnar",
+      title: "WASM Columnar Data Engine",
+      subtitle: "Zero-Copy Ingestion · LRU Memory Pool · Vectorized OLAP",
+      category: "Data & Storage",
+      path: "/c/Users/keaga/OneDrive/Documents/Main Project App/columnar-engine",
+      status: "ONLINE",
+      lang: "Rust/WASM",
+      icon: Database,
+      color: "blue",
+      themeColor: "#58a6ff",
+      stats: { loc: "0.8K", coverage: "95%", size: "280KB", threads: "Web Worker" },
+      githubUrl: "https://github.com",
+      description: "A high-performance in-browser columnar OLAP engine compiled to WebAssembly. Ingests raw binary geospatial data via zero-copy ArrayBuffer parsing, stores columns in SIMD-aligned flat arrays, evicts cold chunks via deterministic LRU policy under a strict 256MB memory ceiling, and executes vectorized spatial filter queries writing matched indices to pre-allocated output buffers.",
+      highlights: [
+        "Zero-copy binary ingestion: bytemuck::cast_slice from raw byte pointers — no clone, no allocate",
+        "Columnar Chunk layout: timestamps (f64), latitudes (f32), longitudes (f32), entity_ids (u32) — flatVec arrays",
+        "EngineMemoryManager: LRU eviction with sequence timestamp tracking, strict 256MB heap cap",
+        "Vectorized queries: execute_filter_scan writes matched indices to *mut u32 without heap allocation",
+        "17 unit + integration tests: memory tracking, LRU order, bbox accuracy, zero-copy validation"
+      ]
     }
   ], []);
 
@@ -647,6 +669,12 @@ export default function ProjectWorkspace({
                 )}
                 {activeProjectId === "fusion" && (
                   <SensorFusionSimulator />
+                )}
+                {activeProjectId === "fusion" && (
+                  <SensorFusionSimulator />
+                )}
+                {activeProjectId === "columnar" && (
+                  <ColumnarEngineSimulator />
                 )}
                 {activeProjectId === "consensus" && (
                   <ViewClusterNodes nodes={nodes} history={history} chaosMode={chaosMode} />
@@ -2640,6 +2668,99 @@ function SensorFusionSimulator() {
 
       <div className="space-y-1">
         <div className="text-[8px] font-mono text-text-soft font-bold uppercase">FUSION LOG</div>
+        <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
+          {log.map((l, i) => <div key={i}>{l}</div>)}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ==========================================
+// 9. COLUMNAR ENGINE SIMULATOR
+// ==========================================
+function ColumnarEngineSimulator() {
+  const [rows, setRows] = useState(0);
+  const [heapUsed, setHeapUsed] = useState(0);
+  const [evictions, setEvictions] = useState(0);
+  const [queryResult, setQueryResult] = useState<number[]>([]);
+  const [log, setLog] = useState<string[]>(["ENGINE: Columnar chunk initialized (65536 rows × 4 cols)"]);
+
+  const addLog = (msg: string) => { setLog(prev => [...prev.slice(-8), msg]); };
+
+  const ingestBatch = () => {
+    const batchRows = Math.floor(Math.random() * 5000) + 1000;
+    const chunkMem = Math.floor(batchRows * 20 * 1.1);
+    setRows(r => r + batchRows);
+    setHeapUsed(h => h + chunkMem);
+    const ts = new Date().toLocaleTimeString();
+    addLog(`[${ts}] INGEST: +${batchRows.toLocaleString()} rows, +${(chunkMem/1024).toFixed(0)}KB heap`);
+
+    if (heapUsed > 250 * 1024 * 1024) {
+      const freed = Math.floor(Math.random() * 5000) + 2000;
+      const freedMem = Math.floor(freed * 20 * 1.1);
+      setHeapUsed(h => h - freedMem);
+      setEvictions(e => e + 1);
+      addLog(`[${ts}] EVICT (LRU): freed ${freed.toLocaleString()} rows, ${(freedMem/1024).toFixed(0)}KB`);
+    }
+  };
+
+  const runQuery = () => {
+    if (rows === 0) return;
+    const matched = Math.floor(Math.random() * 200) + 10;
+    const results = Array.from({ length: matched }, () => Math.floor(Math.random() * rows));
+    setQueryResult(results.slice(0, 8));
+    addLog(`[${new Date().toLocaleTimeString()}] QUERY: bbox scan → ${matched} matches`);
+  };
+
+  return (
+    <div className="cyber-panel p-5 space-y-4">
+      <div className="flex justify-between items-center border-b border-border pb-3">
+        <div>
+          <span className="text-[9px] font-mono text-blue font-bold uppercase tracking-wider block">WASM COLUMNAR</span>
+          <h4 className="text-sm font-bold text-text">Vectorized OLAP Query Engine</h4>
+        </div>
+        <div className="flex gap-1.5">
+          <button onClick={ingestBatch} className="text-[9px] font-mono px-2.5 py-1 bg-blue/10 border border-blue/30 text-blue rounded hover:bg-blue/20 transition-all">INGEST</button>
+          <button onClick={runQuery} className="text-[9px] font-mono px-2.5 py-1 bg-green/10 border border-green/30 text-green rounded hover:bg-green/20 transition-all">QUERY</button>
+          <button onClick={() => { setLog(["ENGINE: Cleared"]); setRows(0); setHeapUsed(0); setEvictions(0); setQueryResult([]); }} className="text-[9px] font-mono px-2 py-1 bg-surface border border-border text-text-soft rounded hover:text-text transition-all">CLEAR</button>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">ROWS INGESTED</span>
+          <span className="text-lg font-mono font-bold text-text">{rows.toLocaleString()}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">HEAP USED</span>
+          <span className="text-lg font-mono font-bold text-text">{(heapUsed/1024/1024).toFixed(1)}MB</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">LRU EVICTIONS</span>
+          <span className="text-lg font-mono font-bold text-red">{evictions}</span>
+        </div>
+        <div className="bg-bg/50 border border-border/50 rounded p-2.5">
+          <span className="text-[8px] font-mono text-text-muted block">MEMORY CAP</span>
+          <span className="text-lg font-mono font-bold text-gold">256MB</span>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4 text-[9px] font-mono text-text-muted">
+        <span>Columns: <span className="text-text font-bold">f64/f32/f32/u32</span></span>
+        <span>Chunk: <span className="text-text font-bold">65536 rows</span></span>
+        <span>Tests: <span className="text-green font-bold">17 PASS</span></span>
+      </div>
+
+      {queryResult.length > 0 && (
+        <div className="bg-bg/50 border border-green/20 rounded p-2">
+          <span className="text-[7px] font-mono text-green font-bold uppercase block mb-1">QUERY RESULT (bbox matched indices)</span>
+          <pre className="text-[8px] font-mono text-text-soft">[{queryResult.join(', ')}{queryResult.length > 8 ? ', ...' : ''}]</pre>
+        </div>
+      )}
+
+      <div className="space-y-1">
+        <div className="text-[8px] font-mono text-text-soft font-bold uppercase">OPERATION LOG</div>
         <div className="bg-bg border border-border/50 rounded p-2 text-[9px] font-mono text-text-soft leading-relaxed h-[70px] overflow-y-auto">
           {log.map((l, i) => <div key={i}>{l}</div>)}
         </div>

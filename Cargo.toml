@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "common-protocol",
+    "columnar-engine",
     "core-sys",
     "lob-engine",
     "telemetry-aggregator",
