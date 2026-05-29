@@ -4,8 +4,7 @@ use std::thread;
 use std::time::Duration;
 
 use telemetry_aggregator::{
-    GorillaCompressor, IngestStats, LogBuffer, PacketRing,
-    parse_coap_payload,
+    parse_coap_payload, GorillaCompressor, IngestStats, LogBuffer, PacketRing,
 };
 
 #[test]
@@ -18,7 +17,9 @@ fn test_100k_packets_compression() {
 
     let send_socket = UdpSocket::bind("127.0.0.1:0").unwrap();
     let recv_socket = UdpSocket::bind("127.0.0.1:19999").unwrap();
-    recv_socket.set_read_timeout(Some(Duration::from_millis(10))).ok();
+    recv_socket
+        .set_read_timeout(Some(Duration::from_millis(10)))
+        .ok();
 
     let dest_addr = "127.0.0.1:19999";
     send_socket.connect(dest_addr).unwrap();
@@ -42,10 +43,7 @@ fn test_100k_packets_compression() {
         let ts = 1_717_012_345_678_901u64 + (i as u64 * 1_000_000);
         let val = 234.567 + (i as f64 * 0.001);
 
-        let payload = format!(
-            "{:032x},{},{},{},{}",
-            0xDEAD_BEEF_CAFE_u128, ts, 1, val, 2
-        );
+        let payload = format!("{:032x},{},{},{},{}", 0xDEAD_BEEF_CAFE_u128, ts, 1, val, 2);
         send_socket.send(payload.as_bytes()).unwrap();
 
         if i % 1000 == 0 {
@@ -93,6 +91,9 @@ fn test_100k_packets_compression() {
         assert!(ratio > 5.0, "Expected >5:1 compression, got {:.1}:1", ratio);
     }
 
-    assert!(buffer.memory_used() < 256 * 1024 * 1024,
-        "Memory usage {} exceeds 256MB cap", buffer.memory_used());
+    assert!(
+        buffer.memory_used() < 256 * 1024 * 1024,
+        "Memory usage {} exceeds 256MB cap",
+        buffer.memory_used()
+    );
 }

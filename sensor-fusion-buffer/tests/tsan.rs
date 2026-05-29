@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 
@@ -24,7 +24,12 @@ fn test_tsan_3_producers_1_consumer_no_data_races() {
                     pid,
                     (seq as u64) * 1_000_000,
                     seq as u64,
-                    0.01, 0.02, 0.98, 0.1, 0.05, 0.03,
+                    0.01,
+                    0.02,
+                    0.98,
+                    0.1,
+                    0.05,
+                    0.03,
                 );
 
                 let mut attempts = 0;
@@ -66,9 +71,12 @@ fn test_tsan_3_producers_1_consumer_no_data_races() {
             }
         }
 
-        assert!(total >= FRAMES_PER_PRODUCER * 3,
+        assert!(
+            total >= FRAMES_PER_PRODUCER * 3,
             "Consumer should have read all {} frames, got {}",
-            FRAMES_PER_PRODUCER * 3, total);
+            FRAMES_PER_PRODUCER * 3,
+            total
+        );
     });
 
     for h in producer_handles {

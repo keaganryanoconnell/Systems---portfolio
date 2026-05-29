@@ -12,8 +12,12 @@ impl fmt::Display for FusionBufferError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::BufferFull => write!(f, "Ring buffer full — all slots occupied by unread data"),
-            Self::SlotContention(seq) => write!(f, "CAS contention on slot claim at sequence {}", seq),
-            Self::OverwriteDetected { dropped, total } => write!(f, "Overwrite: {}/{} frames dropped", dropped, total),
+            Self::SlotContention(seq) => {
+                write!(f, "CAS contention on slot claim at sequence {}", seq)
+            }
+            Self::OverwriteDetected { dropped, total } => {
+                write!(f, "Overwrite: {}/{} frames dropped", dropped, total)
+            }
             Self::AffinityFailed(msg) => write!(f, "CPU affinity failed: {}", msg),
         }
     }

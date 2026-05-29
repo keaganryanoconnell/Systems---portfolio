@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use lob_engine::{LatencyStats, OrderBook, OrderPool, OrderRequest, OrderSide, RingBuffer};
 use lob_engine::pool::MAX_ORDERS;
+use lob_engine::{LatencyStats, OrderBook, OrderPool, OrderRequest, OrderSide, RingBuffer};
 
 const ORDER_COUNT: usize = 1_000_000;
 
@@ -79,7 +79,10 @@ fn main() {
     println!();
     let total_secs = stats.avg_ns() * stats.count() as f64 / 1_000_000_000.0;
     if total_secs > 0.0 {
-        println!("Throughput: {:.0} orders/sec", stats.count() as f64 / total_secs);
+        println!(
+            "Throughput: {:.0} orders/sec",
+            stats.count() as f64 / total_secs
+        );
     }
     println!("Total trades executed: {}", total_trades);
     println!(

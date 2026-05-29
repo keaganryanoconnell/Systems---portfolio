@@ -30,17 +30,26 @@ mod wasm {
         pub fn ingest(&mut self, ptr: *const u8, len: usize) -> Result<u32, JsValue> {
             let bytes = unsafe { std::slice::from_raw_parts(ptr, len) };
             let mut chunk = none_or_error(self.manager.alloc_chunk())?;
-            let rows = unsafe { ingest_raw_block(&mut chunk, bytes).map_err(|e| JsValue::from_str(&e.to_string()))? };
+            let rows = unsafe {
+                ingest_raw_block(&mut chunk, bytes)
+                    .map_err(|e| JsValue::from_str(&e.to_string()))?
+            };
             Ok(rows)
         }
 
-        pub fn query_lat_range(&mut self, chunk_id: u32, min_lat: f32, max_lat: f32) -> Result<Vec<u32>, JsValue> {
+        pub fn query_lat_range(
+            &mut self,
+            chunk_id: u32,
+            min_lat: f32,
+            max_lat: f32,
+        ) -> Result<Vec<u32>, JsValue> {
             for chunk in self.manager.chunks().iter() {
                 if chunk.chunk_id == chunk_id {
                     self.manager.touch_chunk(chunk_id);
                     let mut out = vec![0u32; chunk.row_count as usize];
-                    let count = execute_filter_scan(chunk, min_lat, max_lat, out.as_mut_ptr(), out.len())
-                        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+                    let count =
+                        execute_filter_scan(chunk, min_lat, max_lat, out.as_mut_ptr(), out.len())
+                            .map_err(|e| JsValue::from_str(&e.to_string()))?;
                     out.truncate(count);
                     return Ok(out);
                 }
@@ -49,15 +58,27 @@ mod wasm {
         }
 
         pub fn query_bbox(
-            &mut self, chunk_id: u32,
-            lat_min: f32, lat_max: f32, lon_min: f32, lon_max: f32,
+            &mut self,
+            chunk_id: u32,
+            lat_min: f32,
+            lat_max: f32,
+            lon_min: f32,
+            lon_max: f32,
         ) -> Result<Vec<u32>, JsValue> {
             for chunk in self.manager.chunks().iter() {
                 if chunk.chunk_id == chunk_id {
                     self.manager.touch_chunk(chunk_id);
                     let mut out = vec![0u32; chunk.row_count as usize];
-                    let count = execute_bbox_scan(chunk, lat_min, lat_max, lon_min, lon_max, out.as_mut_ptr(), out.len())
-                        .map_err(|e| JsValue::from_str(&e.to_string()))?;
+                    let count = execute_bbox_scan(
+                        chunk,
+                        lat_min,
+                        lat_max,
+                        lon_min,
+                        lon_max,
+                        out.as_mut_ptr(),
+                        out.len(),
+                    )
+                    .map_err(|e| JsValue::from_str(&e.to_string()))?;
                     out.truncate(count);
                     return Ok(out);
                 }

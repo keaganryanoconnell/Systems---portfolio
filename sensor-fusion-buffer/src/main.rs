@@ -1,11 +1,10 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::Arc;
 use std::thread;
 use std::time::{Duration, Instant};
 
 use sensor_fusion_buffer::{
-    CpuAffinity, FusionBufferError, MpmcRingBuffer,
-    SensorFrame, SensorType,
+    CpuAffinity, FusionBufferError, MpmcRingBuffer, SensorFrame, SensorType,
 };
 
 const RING_SIZE: usize = 1 << 16;
@@ -45,9 +44,13 @@ fn producer(
         let now_ns = base_ts.elapsed().as_nanos() as u64;
 
         let frame = match sensor_type {
-            SensorType::LiDAR => SensorFrame::new_lidar(id, now_ns, seq, 128000, 50.0 + (seq as f32 * 0.001)),
+            SensorType::LiDAR => {
+                SensorFrame::new_lidar(id, now_ns, seq, 128000, 50.0 + (seq as f32 * 0.001))
+            }
             SensorType::Camera => SensorFrame::new_camera(id, now_ns, seq, 1920, 1080, 15000),
-            SensorType::IMU => SensorFrame::new_imu(id, now_ns, seq, 0.01, 0.02, 0.98, 0.1, 0.05, 0.03),
+            SensorType::IMU => {
+                SensorFrame::new_imu(id, now_ns, seq, 0.01, 0.02, 0.98, 0.1, 0.05, 0.03)
+            }
             _ => SensorFrame::new_imu(id, now_ns, seq, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0),
         };
 
@@ -57,13 +60,23 @@ fn producer(
 
         let mut min = stats.min_latency_ns.load(Ordering::Relaxed);
         while elapsed < min {
-            let _ = stats.min_latency_ns.compare_exchange(min, elapsed, Ordering::Relaxed, Ordering::Relaxed);
+            let _ = stats.min_latency_ns.compare_exchange(
+                min,
+                elapsed,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            );
             min = stats.min_latency_ns.load(Ordering::Relaxed);
         }
 
         let mut max = stats.max_latency_ns.load(Ordering::Relaxed);
         while elapsed > max {
-            let _ = stats.max_latency_ns.compare_exchange(max, elapsed, Ordering::Relaxed, Ordering::Relaxed);
+            let _ = stats.max_latency_ns.compare_exchange(
+                max,
+                elapsed,
+                Ordering::Relaxed,
+                Ordering::Relaxed,
+            );
             max = stats.max_latency_ns.load(Ordering::Relaxed);
         }
 
@@ -89,7 +102,10 @@ fn main() {
     println!("=== Sensor Fusion MPMC Ring Buffer ===");
     println!("Lock-free CAS producers · Deterministic overwrite · CPU affinity");
     println!();
-    println!("Configuration: {} slots, 3 producers, 1 consumer", RING_SIZE);
+    println!(
+        "Configuration: {} slots, 3 producers, 1 consumer",
+        RING_SIZE
+    );
     println!("Target: {} total frames", TOTAL_FRAMES);
 
     let cores = CpuAffinity::available_cores();
@@ -121,7 +137,10 @@ fn main() {
         let h = thread::Builder::new()
             .name(format!("producer-{}", name))
             .spawn(move || {
-                println!("[Producer {}] {} started (interval={}us)", id, name, interval);
+                println!(
+                    "[Producer {}] {} started (interval={}us)",
+                    id, name, interval
+                );
                 producer(buf, stats, id, s_type, interval, run);
                 println!("[Producer {}] {} finished", id, name);
             })

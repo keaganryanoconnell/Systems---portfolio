@@ -18,11 +18,7 @@ impl CpuAffinity {
 
             libc::CPU_SET(core_id as usize, &mut cpu_set);
 
-            let ret = libc::sched_setaffinity(
-                0,
-                std::mem::size_of::<libc::cpu_set_t>(),
-                &cpu_set,
-            );
+            let ret = libc::sched_setaffinity(0, std::mem::size_of::<libc::cpu_set_t>(), &cpu_set);
 
             if ret != 0 {
                 let err = std::io::Error::last_os_error();
@@ -38,9 +34,7 @@ impl CpuAffinity {
     #[cfg(target_os = "windows")]
     pub fn pin_current(core_id: u32) -> Result<()> {
         unsafe {
-            use windows_sys::Win32::System::Threading::{
-                GetCurrentThread, SetThreadAffinityMask,
-            };
+            use windows_sys::Win32::System::Threading::{GetCurrentThread, SetThreadAffinityMask};
 
             let mask: usize = 1usize << core_id;
             let prev = SetThreadAffinityMask(GetCurrentThread(), mask);
@@ -60,7 +54,7 @@ impl CpuAffinity {
     pub fn pin_current(core_id: u32) -> Result<()> {
         if core_id > 0 {
             return Err(FusionBufferError::AffinityFailed(
-                "CPU affinity not supported on this platform".into()
+                "CPU affinity not supported on this platform".into(),
             ));
         }
         Ok(())

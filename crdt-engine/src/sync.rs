@@ -45,7 +45,8 @@ impl SyncStateEngine {
         self.stats.total_bytes_synced += delta.delta_size_bytes() as u64;
         self.stats.last_merge_duration_us = latency_ms * 1000;
 
-        self.peers.entry(from_peer)
+        self.peers
+            .entry(from_peer)
             .and_modify(|p| {
                 p.last_seen_clock = delta.clock;
                 p.sync_count += 1;
@@ -74,7 +75,8 @@ impl SyncStateEngine {
     }
 
     pub fn connected_peers(&self) -> Vec<u32> {
-        self.peers.iter()
+        self.peers
+            .iter()
             .filter(|(_, p)| p.connected)
             .map(|(id, _)| *id)
             .collect()

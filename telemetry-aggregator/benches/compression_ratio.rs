@@ -1,15 +1,17 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use telemetry_aggregator::{GorillaCompressor, SensorPoint, parse_coap_payload};
+use telemetry_aggregator::{parse_coap_payload, GorillaCompressor, SensorPoint};
 
 fn generate_block(count: usize) -> Vec<SensorPoint> {
     (0..count)
-        .map(|i| SensorPoint::new(
-             0xDEAD_BEEF_CAFE_u128,
-            1_717_012_345_678_901 + (i as u64 * 1_000_000),
-            (i % 4) as u8,
-            234.567 + (i as f64 * 0.001),
-        ))
+        .map(|i| {
+            SensorPoint::new(
+                0xDEAD_BEEF_CAFE_u128,
+                1_717_012_345_678_901 + (i as u64 * 1_000_000),
+                (i % 4) as u8,
+                234.567 + (i as f64 * 0.001),
+            )
+        })
         .collect()
 }
 

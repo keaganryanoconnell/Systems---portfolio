@@ -37,19 +37,19 @@ impl<V: Clone + Eq + Hash> LwwSet<V> {
     }
 
     pub fn elements(&self) -> Vec<&V> {
-        self.add_set.keys()
-            .filter(|v| self.contains(v))
-            .collect()
+        self.add_set.keys().filter(|v| self.contains(v)).collect()
     }
 
     pub fn merge(&mut self, other: &Self) {
         for (v, ts) in &other.add_set {
-            self.add_set.entry(v.clone())
+            self.add_set
+                .entry(v.clone())
                 .and_modify(|t| *t = (*t).max(*ts))
                 .or_insert(*ts);
         }
         for (v, ts) in &other.remove_set {
-            self.remove_set.entry(v.clone())
+            self.remove_set
+                .entry(v.clone())
                 .and_modify(|t| *t = (*t).max(*ts))
                 .or_insert(*ts);
         }

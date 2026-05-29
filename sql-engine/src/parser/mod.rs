@@ -233,7 +233,11 @@ impl Parser {
     fn parse_primary(&mut self) -> Result<Expression, String> {
         match self.peek().kind {
             TokenKind::IntLiteral => {
-                let val = self.advance().lexeme.parse().map_err(|e| format!("Invalid integer literal: {}", e))?;
+                let val = self
+                    .advance()
+                    .lexeme
+                    .parse()
+                    .map_err(|e| format!("Invalid integer literal: {}", e))?;
                 Ok(Expression::IntLiteral(val))
             }
             TokenKind::StringLiteral => {
@@ -241,7 +245,11 @@ impl Parser {
                 Ok(Expression::StringLiteral(val))
             }
             TokenKind::FloatLiteral => {
-                let val = self.advance().lexeme.parse().map_err(|e| format!("Invalid float literal: {}", e))?;
+                let val = self
+                    .advance()
+                    .lexeme
+                    .parse()
+                    .map_err(|e| format!("Invalid float literal: {}", e))?;
                 Ok(Expression::FloatLiteral(val))
             }
             TokenKind::BoolLiteral => {

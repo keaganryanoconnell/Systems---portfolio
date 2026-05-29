@@ -5,8 +5,7 @@ use std::thread;
 use std::time::{Duration, Instant};
 
 use telemetry_aggregator::{
-    GorillaCompressor, IngestStats, LogBuffer, PacketRing,
-    parse_coap_payload,
+    parse_coap_payload, GorillaCompressor, IngestStats, LogBuffer, PacketRing,
 };
 
 fn main() {
@@ -23,8 +22,12 @@ fn main() {
     let mut buffer = LogBuffer::new(memory_cap, &data_dir);
     let mut stats = IngestStats::new();
 
-    println!("Packet ring: {} frames × {} bytes = {}KB",
-        ring.frame_count(), ring.frame_size(), ring.total_size() / 1024);
+    println!(
+        "Packet ring: {} frames × {} bytes = {}KB",
+        ring.frame_count(),
+        ring.frame_size(),
+        ring.total_size() / 1024
+    );
     println!("Memory cap: {}MB", memory_cap / 1024 / 1024);
     println!("Listening on UDP {}", bind_addr);
     println!();

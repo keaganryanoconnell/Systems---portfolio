@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::Arc;
 use std::thread;
 
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -22,7 +22,17 @@ fn bench_multi_producer_throughput(c: &mut Criterion) {
                 let _run = running.clone();
                 handles.push(thread::spawn(move || {
                     for seq in 0..10_000u64 {
-                        let frame = SensorFrame::new_imu(pid, seq * 1000, seq, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+                        let frame = SensorFrame::new_imu(
+                            pid,
+                            seq * 1000,
+                            seq,
+                            0.0,
+                            0.0,
+                            1.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                        );
                         loop {
                             match buf.try_write(black_box(frame)) {
                                 Ok(_) => break,

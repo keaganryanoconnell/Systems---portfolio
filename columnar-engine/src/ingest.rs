@@ -5,7 +5,10 @@ const MAGIC: &[u8; 4] = b"SPAT";
 
 pub fn parse_header(raw_bytes: &[u8]) -> EngineResult<(u32, [u32; 4])> {
     if raw_bytes.len() < 24 {
-        return Err(EngineError::InsufficientData { expected: 24, actual: raw_bytes.len() });
+        return Err(EngineError::InsufficientData {
+            expected: 24,
+            actual: raw_bytes.len(),
+        });
     }
 
     let magic: [u8; 4] = [raw_bytes[0], raw_bytes[1], raw_bytes[2], raw_bytes[3]];
@@ -16,7 +19,7 @@ pub fn parse_header(raw_bytes: &[u8]) -> EngineResult<(u32, [u32; 4])> {
     let row_count = u32::from_le_bytes([raw_bytes[4], raw_bytes[5], raw_bytes[6], raw_bytes[7]]);
 
     let offsets = [
-        u32::from_le_bytes([raw_bytes[8],  raw_bytes[9],  raw_bytes[10], raw_bytes[11]]),
+        u32::from_le_bytes([raw_bytes[8], raw_bytes[9], raw_bytes[10], raw_bytes[11]]),
         u32::from_le_bytes([raw_bytes[12], raw_bytes[13], raw_bytes[14], raw_bytes[15]]),
         u32::from_le_bytes([raw_bytes[16], raw_bytes[17], raw_bytes[18], raw_bytes[19]]),
         u32::from_le_bytes([raw_bytes[20], raw_bytes[21], raw_bytes[22], raw_bytes[23]]),
@@ -66,7 +69,7 @@ pub unsafe fn ingest_raw_block(chunk: &mut ColumnarChunk, raw_bytes: &[u8]) -> E
     }
 
     let timestamps: &[f64] = bytemuck::cast_slice(&raw_bytes[ts_off..ts_off + ts_bytes]);
-    let latitudes:  &[f32] = bytemuck::cast_slice(&raw_bytes[lat_off..lat_off + f32_bytes]);
+    let latitudes: &[f32] = bytemuck::cast_slice(&raw_bytes[lat_off..lat_off + f32_bytes]);
     let longitudes: &[f32] = bytemuck::cast_slice(&raw_bytes[lon_off..lon_off + f32_bytes]);
     let entity_ids: &[u32] = bytemuck::cast_slice(&raw_bytes[eid_off..eid_off + u32_bytes]);
 
@@ -124,10 +127,11 @@ mod tests {
         data[20..24].copy_from_slice(&(eid_off as u32).to_le_bytes());
 
         for i in 0..row_count as usize {
-            data[ts_off + i*8..ts_off + i*8 + 8].copy_from_slice(&(i as f64).to_le_bytes());
-            data[lat_off + i*4..lat_off + i*4 + 4].copy_from_slice(&(i as f32).to_le_bytes());
-            data[lon_off + i*4..lon_off + i*4 + 4].copy_from_slice(&((i * 2) as f32).to_le_bytes());
-            data[eid_off + i*4..eid_off + i*4 + 4].copy_from_slice(&(i as u32).to_le_bytes());
+            data[ts_off + i * 8..ts_off + i * 8 + 8].copy_from_slice(&(i as f64).to_le_bytes());
+            data[lat_off + i * 4..lat_off + i * 4 + 4].copy_from_slice(&(i as f32).to_le_bytes());
+            data[lon_off + i * 4..lon_off + i * 4 + 4]
+                .copy_from_slice(&((i * 2) as f32).to_le_bytes());
+            data[eid_off + i * 4..eid_off + i * 4 + 4].copy_from_slice(&(i as u32).to_le_bytes());
         }
 
         let mut chunk = ColumnarChunk::new(0);

@@ -134,8 +134,11 @@ mod tests {
             mgr.alloc_chunk().unwrap();
         }
 
-        assert!(mgr.evicted_count() > 0,
-            "LRU eviction should fire with 1MB cap (chunks are {} bytes each)", single);
+        assert!(
+            mgr.evicted_count() > 0,
+            "LRU eviction should fire with 1MB cap (chunks are {} bytes each)",
+            single
+        );
     }
 
     #[test]
@@ -147,6 +150,9 @@ mod tests {
         mgr.touch_chunk(0);
 
         let lru_idx = mgr.find_lru_idx();
-        assert_eq!(mgr.chunks[lru_idx].chunk_id, 1, "Chunk 1 should be LRU after touching chunk 0");
+        assert_eq!(
+            mgr.chunks[lru_idx].chunk_id, 1,
+            "Chunk 1 should be LRU after touching chunk 0"
+        );
     }
 }

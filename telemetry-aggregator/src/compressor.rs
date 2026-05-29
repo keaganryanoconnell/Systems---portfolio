@@ -10,7 +10,9 @@ pub struct GorillaCompressor {
 
 impl GorillaCompressor {
     pub fn new() -> Self {
-        Self { block_buffer: Vec::with_capacity(BLOCK_SIZE) }
+        Self {
+            block_buffer: Vec::with_capacity(BLOCK_SIZE),
+        }
     }
 }
 
@@ -60,7 +62,6 @@ impl GorillaCompressor {
         let mut prev_value = first.sensor_value.to_bits();
 
         for p in block.iter().skip(1) {
-
             let delta = p.timestamp_us.wrapping_sub(prev_timestamp);
             prev_timestamp = p.timestamp_us;
 
@@ -185,8 +186,13 @@ mod tests {
 
         let raw_size = points.len() * 32;
         let ratio = raw_size as f64 / compressed.len() as f64;
-        println!("Compressed {} points: {} bytes → {} bytes ({:.1}:1 ratio)",
-            BLOCK_SIZE, raw_size, compressed.len(), ratio);
+        println!(
+            "Compressed {} points: {} bytes → {} bytes ({:.1}:1 ratio)",
+            BLOCK_SIZE,
+            raw_size,
+            compressed.len(),
+            ratio
+        );
         assert!(ratio > 3.0, "Expected >3:1 compression, got {:.1}:1", ratio);
     }
 }

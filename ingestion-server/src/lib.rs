@@ -1,5 +1,5 @@
-pub mod server;
 pub mod pipeline;
+pub mod server;
 
 #[cfg(target_os = "linux")]
 pub mod io_uring;

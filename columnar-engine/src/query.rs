@@ -18,7 +18,10 @@ pub unsafe fn execute_filter_scan(
     out_capacity: usize,
 ) -> EngineResult<usize> {
     if out_ptr.is_null() || out_capacity == 0 {
-        return Err(EngineError::BufferTooSmall { needed: 1, capacity: 0 });
+        return Err(EngineError::BufferTooSmall {
+            needed: 1,
+            capacity: 0,
+        });
     }
 
     let lats = chunk.latitudes.as_slice();
@@ -53,13 +56,18 @@ pub unsafe fn execute_filter_scan(
 /// concurrently.
 pub unsafe fn execute_bbox_scan(
     chunk: &ColumnarChunk,
-    lat_min: f32, lat_max: f32,
-    lon_min: f32, lon_max: f32,
+    lat_min: f32,
+    lat_max: f32,
+    lon_min: f32,
+    lon_max: f32,
     out_ptr: *mut u32,
     out_capacity: usize,
 ) -> EngineResult<usize> {
     if out_ptr.is_null() || out_capacity == 0 {
-        return Err(EngineError::BufferTooSmall { needed: 1, capacity: 0 });
+        return Err(EngineError::BufferTooSmall {
+            needed: 1,
+            capacity: 0,
+        });
     }
 
     let lats = chunk.latitudes.as_slice();
@@ -103,7 +111,8 @@ mod tests {
         populate_chunk(&mut chunk, 1000);
 
         let mut output = vec![0u32; 1000];
-        let count = unsafe { execute_filter_scan(&chunk, 10.0, 20.0, output.as_mut_ptr(), 1000).unwrap() };
+        let count =
+            unsafe { execute_filter_scan(&chunk, 10.0, 20.0, output.as_mut_ptr(), 1000).unwrap() };
         assert!(count > 0);
         assert!(count < 1000);
     }
@@ -114,7 +123,9 @@ mod tests {
         populate_chunk(&mut chunk, 100);
 
         let mut output = vec![0u32; 100];
-        let count = unsafe { execute_filter_scan(&chunk, -100.0, -50.0, output.as_mut_ptr(), 100).unwrap() };
+        let count = unsafe {
+            execute_filter_scan(&chunk, -100.0, -50.0, output.as_mut_ptr(), 100).unwrap()
+        };
         assert_eq!(count, 0);
     }
 
@@ -125,9 +136,7 @@ mod tests {
 
         let mut output = vec![0u32; 1000];
         let count = unsafe {
-            execute_bbox_scan(
-                &chunk, 0.0, 100.0, 0.0, 200.0, output.as_mut_ptr(), 1000,
-            ).unwrap()
+            execute_bbox_scan(&chunk, 0.0, 100.0, 0.0, 200.0, output.as_mut_ptr(), 1000).unwrap()
         };
         assert!(count > 0);
     }

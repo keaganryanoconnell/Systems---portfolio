@@ -10,7 +10,12 @@ pub struct SensorPoint {
 
 impl SensorPoint {
     pub fn new(meter_id: u128, timestamp_us: u64, sensor_type: u8, sensor_value: f64) -> Self {
-        Self { meter_id, timestamp_us, sensor_type, sensor_value }
+        Self {
+            meter_id,
+            timestamp_us,
+            sensor_type,
+            sensor_value,
+        }
     }
 }
 
@@ -19,11 +24,7 @@ pub fn parse_coap_payload(data: &[u8]) -> Result<Vec<SensorPoint>> {
         return Err(AggregatorError::InvalidPacket("too short".into()));
     }
 
-    let payload = if data[0] == 0xFF {
-        &data[4..]
-    } else {
-        data
-    };
+    let payload = if data[0] == 0xFF { &data[4..] } else { data };
 
     let text = std::str::from_utf8(payload)
         .map_err(|e| AggregatorError::InvalidPacket(format!("invalid UTF-8: {}", e)))?;

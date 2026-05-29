@@ -41,7 +41,8 @@ pub struct OutputPoint {
     pub visible: u32,
 }
 
-const SHADER_SOURCE: &str = include_str!("../../ui-control-center/src/shaders/spatial_transform.wgsl");
+const SHADER_SOURCE: &str =
+    include_str!("../../ui-control-center/src/shaders/spatial_transform.wgsl");
 const MAX_POINTS: u64 = 1_000_000;
 
 pub struct RenderPipeline {
@@ -205,7 +206,8 @@ impl RenderPipeline {
         let slice_size = std::mem::size_of_val(points) as u64;
         let slice_size = slice_size.min(self.input_buffer.size());
 
-        self.queue.write_buffer(&self.input_buffer, 0, &data[..slice_size as usize]);
+        self.queue
+            .write_buffer(&self.input_buffer, 0, &data[..slice_size as usize]);
 
         let viewport = ViewportTransform {
             center_lat: 37.7749,
@@ -216,34 +218,29 @@ impl RenderPipeline {
             lod_threshold: 3.0,
         };
 
-        self.queue.write_buffer(
-            &self.viewport_buffer,
-            0,
-            bytemuck::bytes_of(&viewport),
-        );
+        self.queue
+            .write_buffer(&self.viewport_buffer, 0, bytemuck::bytes_of(&viewport));
 
         Ok(())
     }
 
     pub fn render(&mut self) -> Result<()> {
-        let point_count = (self.input_buffer.size() / std::mem::size_of::<Point>() as u64)
-            .min(MAX_POINTS);
+        let point_count =
+            (self.input_buffer.size() / std::mem::size_of::<Point>() as u64).min(MAX_POINTS);
 
         let workgroup_count = point_count.div_ceil(256) as u32;
 
-        let mut encoder = self.device.create_command_encoder(
-            &wgpu::CommandEncoderDescriptor {
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
                 label: Some("Compute Encoder"),
-            },
-        );
+            });
 
         {
-            let mut compute_pass = encoder.begin_compute_pass(
-                &wgpu::ComputePassDescriptor {
-                    label: Some("Spatial Transform Pass"),
-                    timestamp_writes: None,
-                },
-            );
+            let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+                label: Some("Spatial Transform Pass"),
+                timestamp_writes: None,
+            });
 
             compute_pass.set_pipeline(&self.compute_pipeline);
             compute_pass.set_bind_group(0, &self.bind_group, &[]);

@@ -2,7 +2,7 @@ use crate::error::EngineResult;
 
 pub const CHUNK_ROWS: usize = 65536;
 const _TIMESTAMPS_SIZE: usize = CHUNK_ROWS * 8;
-const _LATITUDES_SIZE: usize  = CHUNK_ROWS * 4;
+const _LATITUDES_SIZE: usize = CHUNK_ROWS * 4;
 const _LONGITUDES_SIZE: usize = CHUNK_ROWS * 4;
 const _ENTITY_IDS_SIZE: usize = CHUNK_ROWS * 4;
 
@@ -45,7 +45,11 @@ impl ColumnarChunk {
         longitudes: &[f32],
         entity_ids: &[u32],
     ) -> EngineResult<u32> {
-        let count = timestamps.len().min(latitudes.len()).min(longitudes.len()).min(entity_ids.len());
+        let count = timestamps
+            .len()
+            .min(latitudes.len())
+            .min(longitudes.len())
+            .min(entity_ids.len());
         let count = count.min(self.rows_remaining() as usize);
 
         if count == 0 {
@@ -81,7 +85,9 @@ mod tests {
         let f32_data: Vec<f32> = (0..1000).map(|i| i as f32).collect();
         let u32_data: Vec<u32> = (0..1000).map(|i| i as u32).collect();
 
-        let count = chunk.extend_from(&data, &f32_data, &f32_data, &u32_data).unwrap();
+        let count = chunk
+            .extend_from(&data, &f32_data, &f32_data, &u32_data)
+            .unwrap();
         assert_eq!(count, 1000);
         assert_eq!(chunk.row_count, 1000);
         assert_eq!(chunk.timestamps[0], 0.0);

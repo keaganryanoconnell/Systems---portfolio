@@ -1,8 +1,4 @@
-use columnar_engine::{
-    ColumnarChunk, EngineMemoryManager,
-    execute_bbox_scan,
-    ingest_raw_block,
-};
+use columnar_engine::{execute_bbox_scan, ingest_raw_block, ColumnarChunk, EngineMemoryManager};
 
 fn build_test_block(rows: u32) -> Vec<u8> {
     let ts_size = rows as usize * 8;
@@ -24,10 +20,10 @@ fn build_test_block(rows: u32) -> Vec<u8> {
     data[20..24].copy_from_slice(&(eid_off as u32).to_le_bytes());
 
     for i in 0..rows as usize {
-        data[ts_off + i*8..ts_off + i*8 + 8].copy_from_slice(&(i as f64).to_le_bytes());
-        data[lat_off + i*4..lat_off + i*4 + 4].copy_from_slice(&(i as f32).to_le_bytes());
-        data[lon_off + i*4..lon_off + i*4 + 4].copy_from_slice(&((i * 2) as f32).to_le_bytes());
-        data[eid_off + i*4..eid_off + i*4 + 4].copy_from_slice(&(i as u32).to_le_bytes());
+        data[ts_off + i * 8..ts_off + i * 8 + 8].copy_from_slice(&(i as f64).to_le_bytes());
+        data[lat_off + i * 4..lat_off + i * 4 + 4].copy_from_slice(&(i as f32).to_le_bytes());
+        data[lon_off + i * 4..lon_off + i * 4 + 4].copy_from_slice(&((i * 2) as f32).to_le_bytes());
+        data[eid_off + i * 4..eid_off + i * 4 + 4].copy_from_slice(&(i as u32).to_le_bytes());
     }
 
     data
@@ -58,10 +54,14 @@ fn test_lru_eviction_order() {
     let (chunk0_id, _) = {
         let c0 = manager.alloc_chunk().unwrap();
         let id0 = c0.chunk_id;
-        unsafe { ingest_raw_block(c0, &test_block).unwrap(); }
+        unsafe {
+            ingest_raw_block(c0, &test_block).unwrap();
+        }
         let c1 = manager.alloc_chunk().unwrap();
         let id1 = c1.chunk_id;
-        unsafe { ingest_raw_block(c1, &test_block).unwrap(); }
+        unsafe {
+            ingest_raw_block(c1, &test_block).unwrap();
+        }
         (id0, id1)
     };
 
@@ -69,25 +69,38 @@ fn test_lru_eviction_order() {
 
     for _ in 0..5 {
         let c = manager.alloc_chunk().unwrap();
-        unsafe { ingest_raw_block(c, &test_block).ok(); }
+        unsafe {
+            ingest_raw_block(c, &test_block).ok();
+        }
     }
 
     let ids: Vec<u32> = manager.chunks().iter().map(|c| c.chunk_id).collect();
-    assert!(ids.contains(&chunk0_id), "Chunk 0 should survive because it was touched (MRU)");
+    assert!(
+        ids.contains(&chunk0_id),
+        "Chunk 0 should survive because it was touched (MRU)"
+    );
 }
 
 #[test]
 fn test_bbox_query_accuracy() {
     let mut chunk = ColumnarChunk::new(0);
     let data = build_test_block(1000);
-    unsafe { ingest_raw_block(&mut chunk, &data).unwrap(); }
+    unsafe {
+        ingest_raw_block(&mut chunk, &data).unwrap();
+    }
 
     let mut output = vec![0u32; 1000];
     let count = unsafe {
         execute_bbox_scan(
-            &chunk, 100.0, 200.0, 200.0, 400.0,
-            output.as_mut_ptr(), 1000,
-        ).unwrap()
+            &chunk,
+            100.0,
+            200.0,
+            200.0,
+            400.0,
+            output.as_mut_ptr(),
+            1000,
+        )
+        .unwrap()
     };
 
     for &idx in output.iter().take(count as usize) {
@@ -122,7 +135,9 @@ fn test_no_memory_leak_on_repeated_alloc_free() {
 
     for _ in 0..20 {
         let chunk = manager.alloc_chunk().unwrap();
-        unsafe { ingest_raw_block(chunk, &test_block).ok(); }
+        unsafe {
+            ingest_raw_block(chunk, &test_block).ok();
+        }
     }
 
     assert!(manager.heap_used() <= manager.max_capacity());

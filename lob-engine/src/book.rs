@@ -224,7 +224,10 @@ impl<'a> OrderBook<'a> {
             return;
         }
         let pos = self.find_bid_insert_pos(price);
-        if pos < self.bid_count && self.bid_levels[pos].price == price && !self.bid_levels[pos].is_full() {
+        if pos < self.bid_count
+            && self.bid_levels[pos].price == price
+            && !self.bid_levels[pos].is_full()
+        {
             self.bid_levels[pos].push(order_id);
         } else {
             self.shift_bids_right(pos);
@@ -240,7 +243,10 @@ impl<'a> OrderBook<'a> {
             return;
         }
         let pos = self.find_ask_insert_pos(price);
-        if pos < self.ask_count && self.ask_levels[pos].price == price && !self.ask_levels[pos].is_full() {
+        if pos < self.ask_count
+            && self.ask_levels[pos].price == price
+            && !self.ask_levels[pos].is_full()
+        {
             self.ask_levels[pos].push(order_id);
         } else {
             self.shift_asks_right(pos);

@@ -6,7 +6,8 @@ use crate::sync::SyncEngine;
 const LISTEN_ADDR: &str = "127.0.0.1:9400";
 
 pub async fn run_server() -> crate::error::Result<()> {
-    let addr: SocketAddr = LISTEN_ADDR.parse()
+    let addr: SocketAddr = LISTEN_ADDR
+        .parse()
         .map_err(|e| crate::error::SyncError::BindFailed(format!("invalid addr: {}", e)))?;
 
     let listener = tokio::net::TcpListener::bind(addr).await?;

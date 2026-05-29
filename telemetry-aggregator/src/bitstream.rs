@@ -81,7 +81,11 @@ pub struct BitReader<'a> {
 
 impl<'a> BitReader<'a> {
     pub fn new(words: &'a [u64]) -> Self {
-        Self { words, word_idx: 0, bits_consumed: 0 }
+        Self {
+            words,
+            word_idx: 0,
+            bits_consumed: 0,
+        }
     }
 
     pub fn new_from_bytes(bytes: &'a [u8]) -> Self {

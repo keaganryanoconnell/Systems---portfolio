@@ -19,7 +19,8 @@ mod wasm {
         }
 
         pub async fn init(&mut self) -> Result<(), JsValue> {
-            let pipeline = RenderPipeline::new().await
+            let pipeline = RenderPipeline::new()
+                .await
                 .map_err(|e| JsValue::from_str(&e.to_string()))?;
             self.pipeline = Some(pipeline);
             Ok(())
@@ -28,7 +29,8 @@ mod wasm {
         pub fn update_buffers(&mut self, ptr: *const u8, len: usize) -> Result<(), JsValue> {
             if let Some(ref mut p) = self.pipeline {
                 let data = unsafe { std::slice::from_raw_parts(ptr, len) };
-                p.update_buffers(data).map_err(|e| JsValue::from_str(&e.to_string()))?;
+                p.update_buffers(data)
+                    .map_err(|e| JsValue::from_str(&e.to_string()))?;
             }
             Ok(())
         }

@@ -1,5 +1,5 @@
-use tokio::net::TcpListener;
 use tokio::io::AsyncReadExt;
+use tokio::net::TcpListener;
 
 use crate::pipeline::Pipeline;
 
@@ -7,10 +7,14 @@ const LISTEN_ADDR: &str = "127.0.0.1:8400";
 const MAX_FRAME_SIZE: usize = 16 * 1024 * 1024;
 
 pub async fn run_server() -> crate::error::Result<()> {
-    let listener = TcpListener::bind(LISTEN_ADDR).await
+    let listener = TcpListener::bind(LISTEN_ADDR)
+        .await
         .map_err(|e| crate::error::IngestError::BindFailed(format!("{}: {}", LISTEN_ADDR, e)))?;
 
-    tracing::info!("[tcp-fallback] Ingestion server listening on {}", LISTEN_ADDR);
+    tracing::info!(
+        "[tcp-fallback] Ingestion server listening on {}",
+        LISTEN_ADDR
+    );
 
     loop {
         let (mut socket, peer) = listener.accept().await?;

@@ -85,10 +85,18 @@ impl LatencyStats {
         self.total_count
     }
     pub fn min(&self) -> u64 {
-        if self.total_count == 0 { 0 } else { self.min_ns }
+        if self.total_count == 0 {
+            0
+        } else {
+            self.min_ns
+        }
     }
     pub fn max(&self) -> u64 {
-        if self.total_count == 0 { 0 } else { self.max_ns }
+        if self.total_count == 0 {
+            0
+        } else {
+            self.max_ns
+        }
     }
 
     pub fn print(&self, label: &str) {

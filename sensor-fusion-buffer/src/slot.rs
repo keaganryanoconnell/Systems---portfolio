@@ -9,7 +9,9 @@ pub struct CachePaddedAtomicU64 {
 
 impl CachePaddedAtomicU64 {
     fn new(v: u64) -> Self {
-        Self { value: AtomicU64::new(v) }
+        Self {
+            value: AtomicU64::new(v),
+        }
     }
 }
 

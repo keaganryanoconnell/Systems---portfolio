@@ -22,11 +22,33 @@ impl SensorType {
 
 #[derive(Debug, Clone, Copy)]
 pub enum SensorData {
-    LiDAR { points: u32, range_m: f32 },
-    Camera { width: u16, height: u16, exposure_us: u32 },
-    IMU { ax: f32, ay: f32, az: f32, gx: f32, gy: f32, gz: f32 },
-    GPS { lat: f64, lon: f64, alt: f32 },
-    Radar { velocity: f32, distance: f32, angle: f32 },
+    LiDAR {
+        points: u32,
+        range_m: f32,
+    },
+    Camera {
+        width: u16,
+        height: u16,
+        exposure_us: u32,
+    },
+    IMU {
+        ax: f32,
+        ay: f32,
+        az: f32,
+        gx: f32,
+        gy: f32,
+        gz: f32,
+    },
+    GPS {
+        lat: f64,
+        lon: f64,
+        alt: f32,
+    },
+    Radar {
+        velocity: f32,
+        distance: f32,
+        angle: f32,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -40,17 +62,40 @@ pub struct SensorFrame {
 
 impl SensorFrame {
     #[allow(clippy::too_many_arguments)]
-    pub fn new_imu(sensor_id: u32, timestamp_ns: u64, sequence: u64, ax: f32, ay: f32, az: f32, gx: f32, gy: f32, gz: f32) -> Self {
+    pub fn new_imu(
+        sensor_id: u32,
+        timestamp_ns: u64,
+        sequence: u64,
+        ax: f32,
+        ay: f32,
+        az: f32,
+        gx: f32,
+        gy: f32,
+        gz: f32,
+    ) -> Self {
         Self {
             sensor_type: SensorType::IMU,
             sensor_id,
             timestamp_ns,
             sequence,
-            data: SensorData::IMU { ax, ay, az, gx, gy, gz },
+            data: SensorData::IMU {
+                ax,
+                ay,
+                az,
+                gx,
+                gy,
+                gz,
+            },
         }
     }
 
-    pub fn new_lidar(sensor_id: u32, timestamp_ns: u64, sequence: u64, points: u32, range_m: f32) -> Self {
+    pub fn new_lidar(
+        sensor_id: u32,
+        timestamp_ns: u64,
+        sequence: u64,
+        points: u32,
+        range_m: f32,
+    ) -> Self {
         Self {
             sensor_type: SensorType::LiDAR,
             sensor_id,
@@ -60,13 +105,24 @@ impl SensorFrame {
         }
     }
 
-    pub fn new_camera(sensor_id: u32, timestamp_ns: u64, sequence: u64, width: u16, height: u16, exposure_us: u32) -> Self {
+    pub fn new_camera(
+        sensor_id: u32,
+        timestamp_ns: u64,
+        sequence: u64,
+        width: u16,
+        height: u16,
+        exposure_us: u32,
+    ) -> Self {
         Self {
             sensor_type: SensorType::Camera,
             sensor_id,
             timestamp_ns,
             sequence,
-            data: SensorData::Camera { width, height, exposure_us },
+            data: SensorData::Camera {
+                width,
+                height,
+                exposure_us,
+            },
         }
     }
 }

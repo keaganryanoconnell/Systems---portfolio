@@ -12,7 +12,9 @@ struct PaddedU64 {
 
 impl PaddedU64 {
     const fn new(v: u64) -> Self {
-        Self { value: AtomicU64::new(v) }
+        Self {
+            value: AtomicU64::new(v),
+        }
     }
 }
 
@@ -63,7 +65,10 @@ impl<T, const N: usize> MpmcRingBuffer<T, N> {
             }
 
             match self.write_cursor.value.compare_exchange_weak(
-                write_seq, next_seq, Ordering::AcqRel, Ordering::Acquire,
+                write_seq,
+                next_seq,
+                Ordering::AcqRel,
+                Ordering::Acquire,
             ) {
                 Ok(_) => break i,
                 Err(_) => {
@@ -76,7 +81,9 @@ impl<T, const N: usize> MpmcRingBuffer<T, N> {
         let next_seq = self.write_cursor.value.load(Ordering::Relaxed);
         let slots = unsafe { &mut (*self.slots.get()) };
 
-        unsafe { slots[idx].write(value); }
+        unsafe {
+            slots[idx].write(value);
+        }
         fence(Ordering::SeqCst);
         slots[idx].sequence.value.store(next_seq, Ordering::Release);
 
@@ -101,7 +108,9 @@ impl<T, const N: usize> MpmcRingBuffer<T, N> {
             let value = unsafe { slots[idx].read() };
             fence(Ordering::Acquire);
 
-            unsafe { slots[idx].drop_value(); }
+            unsafe {
+                slots[idx].drop_value();
+            }
 
             self.read_cursor.value.store(next_seq, Ordering::Release);
             dest.push(value);

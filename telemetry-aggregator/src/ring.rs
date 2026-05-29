@@ -90,11 +90,15 @@ impl PacketRing {
         loop {
             if !self.frames[idx].ready.load(Ordering::Acquire) {
                 let data_ptr = self.frames[idx].data.get();
-                unsafe { data_ptr.write([0u8; DEFAULT_FRAME_SIZE]); }
+                unsafe {
+                    data_ptr.write([0u8; DEFAULT_FRAME_SIZE]);
+                }
                 let buf = unsafe { &mut *data_ptr };
                 buf[..write_len].copy_from_slice(&data[..write_len]);
                 fence(Ordering::SeqCst);
-                self.frames[idx].len.store(write_len as u16, Ordering::Release);
+                self.frames[idx]
+                    .len
+                    .store(write_len as u16, Ordering::Release);
                 fence(Ordering::SeqCst);
                 self.frames[idx].ready.store(true, Ordering::Release);
                 return Ok(idx);
