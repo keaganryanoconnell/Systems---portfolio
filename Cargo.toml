@@ -18,6 +18,8 @@ members = [
     "compute-orchestrator",
     "api-gateway",
     "render-engine",
+    "ingestion-server",
+    "sync-server",
 ]
 resolver = "2"
 

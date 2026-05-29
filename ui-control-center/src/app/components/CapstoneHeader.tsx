@@ -25,7 +25,7 @@ export default function CapstoneHeader({
         </h1>
         <span className="text-[9px] font-mono text-text-muted border border-border px-2 py-0.5 rounded">v0.1.0</span>
         <span className="text-[8px] font-mono text-text-muted hidden sm:inline">
-          18 Crates · 85+ Tests · 0 Clippy
+          20 Crates · 85+ Tests · 0 Clippy
         </span>
       </div>
 

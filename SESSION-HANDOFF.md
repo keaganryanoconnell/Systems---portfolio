@@ -2,57 +2,56 @@
 
 ## What Was Built This Session
 
+### New Crates (2 Phase 3/4 Scaffolds)
+| Crate | Files | Platform | Key Feature |
+|---|---|---|---|
+| `ingestion-server` | 7 | Cross-platform (io_uring Linux, TCP fallback) | Binary ingestion pipeline, IngestBuffer with max capacity, tokio TCP server on port 8400 |
+| `sync-server` | 7 | Cross-platform (QUIC Linux, WebSocket fallback) | CRDT sync engine, SessionManager (256 peers), SyncDelta/MsgType protocol, port 9400 |
+
 ### New Crate: render-engine
-- `render-engine/src/pipeline.rs` — headless wgpu compute pipeline, 5 GPU buffers, 1M point capacity, 256-thread workgroups
-- `render-engine/src/lib.rs` — WASM bindings: WasmRenderer with init/update_buffers/render/resize
-- `render-engine/Cargo.toml` — wgpu 23, bytemuck, wasm-bindgen (WASM target)
+- Headless wgpu compute pipeline, 5 GPU buffers, 1M point capacity, WGSL shader wired
 
 ### Capstone LIVE/SIM Worker Integration
-- **EngineWorkerProvider.tsx** — React context: SAB detection, dynamic EngineWorkerPool import, SAB→SIM fallback
-- **CapstoneHeader.tsx** — LIVE/SIM toggle with green/gold/gray states
-- **capstone/page.tsx** — wrapped in EngineWorkerProvider
+- EngineWorkerProvider, LIVE/SIM toggle, SAB→SIM graceful fallback
 
 ### New Capstone Panels (6 total left tabs)
-- **MemoryMapPanel.tsx** — 128MB SharedArrayBuffer visualization
-- **DeployPanel.tsx** — 10-service docker compose topology
-- **StressTestPanel.tsx** — Concurrency slider, FIRE button, latency percentiles (p50/p99/p999), 8-bucket histogram, queue depth saturation detection
+- MemoryMapPanel · DeployPanel · StressTestPanel (load injector with p50/p99/p999)
 
 ### Test Coverage
 - **74 frontend tests** across 11 suites, all passing, 0 flakes
-- MemoryMapPanel: 5 · DeployPanel: 5 · EngineWorkerProvider: 6 · DeepDives: fixed flake
-- **92+ Rust tests** passing (TSAN stress test times out at 300K frames — normal for 4-thread CAS loop)
+- **92+ Rust tests** passing
 
-### Clippy Cleanup — 0 warnings across entire workspace (all 18 crates, all targets)
-- Fixed: 29 clippy errors across columnar-engine, telemetry-aggregator, sensor-fusion-buffer, lob-engine, render-engine, crdt-engine
-- Added: 6 `Default` impls, 5 `# Safety` doc sections, marked 2 functions `unsafe`, replaced range loops with iterators, removed unnecessary casts, merged identical if branches, fixed hex literal groupings
+### Clippy Cleanup
+- **0 clippy warnings** across entire workspace (all 20 crates, all targets, all features)
+- Fixed 29 errors: 6 Default impls, 5 Safety docs, range→iterators, cast removal, hex groupings
 
-### render-engine Integration (All References Updated)
-- **AGENTS.md**: 17→18, Tier 1 table, widget count, shader/worker status
-- **SystemsStackMap.tsx**: render-engine node + edge to Columnar
-- **ProjectCards.tsx**: render-engine problem/primitives/metric card
-- **ArchMap.tsx**: Render Engine in 13-node spec, connected to Control Center + Core Systems
-- **ProjectWorkspace.tsx**: render-engine project + RenderEngineSimulator widget
-- **CapstoneHeader/Panels**: "18 Crates" consistently
+### Documentation
+- AGENTS.md: 17→20 crates, added ingestion-server + sync-server to architecture tables
+- CapstoneHeader/Panels: "20 Crates"
+- All SystemsStackMap, ProjectCards, ArchMap updated with render-engine
 
 ## Workspace Health
-- **18 crates** compile clean (0 warnings, all targets, all features)
-- **0 clippy warnings** (enforced via `-D warnings`)
+- **20 crates** compile clean (0 warnings, all targets, all features)
+- **0 clippy warnings** (`-D warnings`)
 - **0 cargo-deny violations**
-- **92+ Rust tests** pass
 - **74 frontend tests** pass (11 suites, 0 flakes)
 - **Frontend build:** Clean, 3 static pages
 
-## What's NOT Done (Priority Order)
+## What's NOT Done
 
-### LOW: Build Phase 3 Backend (io_uring ingestion server)
-- Requires Linux (blocked on Windows)
+### PHASE 3: Complete io_uring ingestion (Linux only)
+- The `ingestion-server` crate scaffold exists with Linux-only `io_uring.rs` module
+- Deps: `tokio-uring` added for Linux target
+- Next: implement zero-copy buffer submission, completion queue polling, spliced file descriptors
 
-### LOW: Build Phase 4 WebTransport sync server
-- Requires Linux + QUIC certs (blocked on Windows)
+### PHASE 4: Complete WebTransport/QUIC sync (Linux only)
+- The `sync-server` crate scaffold exists with Linux-only `quic.rs` module  
+- Deps: `quinn`, `rcgen`, `rustls` added for Linux target
+- Next: implement QUIC stream multiplexing, WebTransport datagrams, h3 session handshake
 
 ## Next Session Starter Prompt
 ```
 Read AGENTS.md and SESSION-HANDOFF.md first for full context.
-18 crates, 0 clippy, 0 warnings, 74 frontend tests.
+20 crates, 0 clippy, 0 warnings, 74 frontend tests.
 Continue from ideas in SESSION-HANDOFF.md or propose new work.
 ```

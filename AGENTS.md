@@ -2,7 +2,7 @@
 
 ## Quick-Start for AI Agents
 
-This is an 18-crate Rust monorepo + Next.js 15 frontend. Read this before writing any code.
+This is a 20-crate Rust monorepo + Next.js 15 frontend. Read this before writing any code.
 
 ### Build Commands
 ```bash
@@ -33,7 +33,7 @@ cargo audit
 - **Capstone console:** https://systems-portfolio-five.vercel.app/capstone
 - **GitHub:** https://github.com/keaganryanoconnell/Systems---portfolio
 
-## Architecture (18 Crates)
+## Architecture (20 Crates)
 
 ### Storage & Data Layer (Tier 1)
 | Crate | Purpose | Key Files |
@@ -59,11 +59,13 @@ cargo audit
 | `sensor-fusion-buffer` | MPMC CAS ring buffer: LiDAR/Camera/IMU fusion | `src/buffer.rs`, `src/affinity.rs` |
 | `src-tauri` | Tauri desktop shell | `src/main.rs` |
 | `admin-tools` | Terminal TUI dashboard | `src/tui.rs` |
+| `ingestion-server` | High-throughput binary ingestion (io_uring on Linux, TCP fallback) | `src/server.rs`, `src/pipeline.rs` |
 
 ### Sync & Consensus Layer (Tier 3 — Capstone)
 | Crate | Purpose | Key Files |
 |---|---|---|
 | `crdt-engine` | LWW-Element-Set: delta sync, peer merge | `src/lww.rs`, `src/sync.rs` |
+| `sync-server` | Real-time CRDT sync server (QUIC on Linux, WebSocket fallback) | `src/session.rs`, `src/sync.rs` |
 
 ## Frontend Architecture (ui-control-center/)
 
@@ -72,7 +74,7 @@ cargo audit
 |---|---|
 | `src/app/page.tsx` | Main scrollable portfolio |
 | `src/app/capstone/page.tsx` | FAANG-grade capstone console |
-| `src/app/components/ProjectWorkspace.tsx` | All 18 project widgets (~2800 lines) |
+| `src/app/components/ProjectWorkspace.tsx` | All 20 project widgets (~2800 lines) |
 | `src/app/components/CapstonePanels.tsx` | Capstone 3-column layout |
 | `src/app/components/NavBar.tsx` | Sticky nav with scroll-spy |
 | `src/app/components/DeepDives.tsx` | 5 technical deep dives with ASCII diagrams |

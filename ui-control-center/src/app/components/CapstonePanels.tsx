@@ -281,7 +281,7 @@ export default function CapstonePanels({ workerMode }: { workerMode: "sim" | "li
         </button>
         <span className="flex-1" />
         <span className="text-[8px] font-mono text-text-muted">
-          18 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
+          20 Crates · 85+ Tests · 0 Clippy · {new Date().toLocaleTimeString()}
         </span>
       </div>
 
