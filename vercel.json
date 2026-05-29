@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd ui-control-center && npm ci && npm run build",
+  "outputDirectory": "ui-control-center/out",
+  "installCommand": "cd ui-control-center && npm ci",
+  "rewrites": [
+    { "source": "/capstone", "destination": "/capstone.html" }
+  ]
+}
