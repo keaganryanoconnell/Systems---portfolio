@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 use std::io::{self, Read, Write};
-use tracing::{error, info, warn};
 use std::net::SocketAddr;
 use std::sync::Arc;
+use tracing::{error, info, warn};
 
 use mio::net::{TcpListener, TcpStream};
 use mio::{Events, Interest, Poll, Token};
@@ -427,7 +427,10 @@ impl BrokerServer {
         let mut connections = self.connections.lock();
         if let Some(conn) = connections.remove(&token) {
             let _ = conn.stream.shutdown(std::net::Shutdown::Both);
-            info!("[server] connection removed: {} (token={})", conn.addr, token.0);
+            info!(
+                "[server] connection removed: {} (token={})",
+                conn.addr, token.0
+            );
         }
     }
 }

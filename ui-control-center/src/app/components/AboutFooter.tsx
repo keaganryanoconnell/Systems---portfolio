@@ -30,13 +30,13 @@ export function About() {
           </p>
 
           <div className="flex items-center gap-3 pt-4">
-            <a href="https://github.com" target="_blank" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
+            <a href="https://github.com/keaganryanoconnell" target="_blank" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
               <Github size={14} /> GitHub
             </a>
-            <a href="https://linkedin.com" target="_blank" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
+            <a href="https://linkedin.com/in/keaganryanoconnell" target="_blank" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
               <Linkedin size={14} /> LinkedIn
             </a>
-            <a href="mailto:hello@example.com" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
+            <a href="mailto:keaganryanoconnell@gmail.com" className="flex items-center gap-2 px-4 py-2.5 bg-surface border border-border rounded-md text-xs font-mono font-bold text-text-soft hover:text-text hover:border-border-hover transition-all">
               <Mail size={14} /> Email
             </a>
           </div>

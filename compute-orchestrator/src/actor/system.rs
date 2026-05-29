@@ -54,7 +54,10 @@ impl ActorSystem {
         Fut: std::future::Future<Output = ()> + Send + 'static,
     {
         if mailbox_size == 0 || mailbox_size > 65535 {
-            panic!("mailbox_size must be in range 1..65536, got {}", mailbox_size);
+            panic!(
+                "mailbox_size must be in range 1..65536, got {}",
+                mailbox_size
+            );
         }
 
         let actor_id = self.next_id.fetch_add(1, Ordering::SeqCst);

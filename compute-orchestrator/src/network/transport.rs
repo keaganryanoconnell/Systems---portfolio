@@ -23,7 +23,11 @@ pub async fn recv_message<T: DeserializeOwned>(stream: &mut TcpStream) -> Result
     read_frame(stream).await
 }
 
-pub async fn send_tls<T: Serialize>(addr: SocketAddr, msg: &T, tls_config: &Arc<rustls::ClientConfig>) -> Result<()> {
+pub async fn send_tls<T: Serialize>(
+    addr: SocketAddr,
+    msg: &T,
+    tls_config: &Arc<rustls::ClientConfig>,
+) -> Result<()> {
     let stream = TcpStream::connect(addr).await?;
     stream.set_nodelay(true)?;
 
@@ -32,8 +36,9 @@ pub async fn send_tls<T: Serialize>(addr: SocketAddr, msg: &T, tls_config: &Arc<
         .to_owned();
 
     let connector = TlsConnector::from(Arc::clone(tls_config));
-    let mut tls_stream = connector.connect(domain, stream).await
-        .map_err(|e| crate::error::OrchestratorError::Network(format!("TLS handshake failed: {e}")))?;
+    let mut tls_stream = connector.connect(domain, stream).await.map_err(|e| {
+        crate::error::OrchestratorError::Network(format!("TLS handshake failed: {e}"))
+    })?;
 
     write_frame(&mut tls_stream, msg).await
 }
@@ -46,7 +51,9 @@ pub async fn accept_tls(
     stream.set_nodelay(true)?;
 
     let acceptor = tokio_rustls::TlsAcceptor::from(Arc::clone(tls_config));
-    let tls_stream = acceptor.accept(stream).await
+    let tls_stream = acceptor
+        .accept(stream)
+        .await
         .map_err(|e| crate::error::OrchestratorError::Network(format!("TLS accept failed: {e}")))?;
 
     Ok((tls_stream, addr))
@@ -79,10 +86,7 @@ pub fn make_tls_client_config(ca_cert_pem: &str) -> Result<Arc<ClientConfig>> {
     Ok(Arc::new(config))
 }
 
-pub fn make_tls_server_config(
-    cert_pem: &str,
-    key_pem: &str,
-) -> Result<Arc<rustls::ServerConfig>> {
+pub fn make_tls_server_config(cert_pem: &str, key_pem: &str) -> Result<Arc<rustls::ServerConfig>> {
     let certs = rustls_pemfile::certs(&mut cert_pem.as_bytes())
         .collect::<std::result::Result<Vec<_>, _>>()
         .map_err(|e| crate::error::OrchestratorError::Network(format!("invalid PEM certs: {e}")))?;
@@ -125,7 +129,7 @@ async fn read_frame<T: DeserializeOwned>(stream: &mut TcpStream) -> Result<T> {
         })??;
     let len = u32::from_be_bytes(len_buf) as usize;
 
-    if len > 1 * 1024 * 1024 {
+    if len > 1024 * 1024 {
         return Err(crate::error::OrchestratorError::Network(format!(
             "message too large: {} bytes",
             len

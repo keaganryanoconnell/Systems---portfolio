@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::error::{BrokerError, BrokerResult};
 
 const DEFAULT_MAX_SEGMENT_SIZE: u64 = 512 * 1024 * 1024;
-const MAX_KEY_LEN: usize = 1 * 1024 * 1024;
+const MAX_KEY_LEN: usize = 1024 * 1024;
 const MAX_VALUE_LEN: usize = 16 * 1024 * 1024;
 
 #[derive(Debug, Clone)]

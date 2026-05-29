@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { decodeNodeTelemetry, encodeNodeTelemetry, generateMockNodesTelemetry, type NodeTelemetry } from "./utils/tauri";
 import ErrorBoundary from "./components/ErrorBoundary";
+import Skeleton from "./components/Skeleton";
 import NavBar from "./components/NavBar";
 import Hero from "./components/Hero";
 import ArchMap from "./components/ArchMap";

@@ -1,0 +1,38 @@
+# Auto-detect text files and normalize line endings to LF on commit
+* text=auto
+
+# Rust
+*.rs text eol=lf
+*.toml text eol=lf
+*.lock text eol=lf
+
+# Web
+*.ts text eol=lf
+*.tsx text eol=lf
+*.js text eol=lf
+*.jsx text eol=lf
+*.json text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.mjs text eol=lf
+
+# Config
+*.yml text eol=lf
+*.yaml text eol=lf
+Dockerfile text eol=lf
+*.tf text eol=lf
+Justfile text eol=lf
+
+# Scripts
+*.sh text eol=lf
+*.py text eol=lf
+*.ps1 text eol=lf
+
+# Binary
+*.png binary
+*.ico binary
+*.icns binary
+*.jpg binary
+*.gif binary
+*.webm binary
+*.zip binary

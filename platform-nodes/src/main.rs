@@ -3,9 +3,9 @@
 //! Handles core cloud-native server engines (LSM Storage, HTTP epoll proxy, Raft cluster).
 //! Uses target conditional compilation gates to isolate Linux-specific APIs (epoll).
 
+use core_sys::{init_telemetry_daemon, log_error, log_info, stop_telemetry_daemon};
 use platform_nodes::consensus::{self, SwimNode};
 use platform_nodes::storage;
-use core_sys::{init_telemetry_daemon, log_error, log_info, stop_telemetry_daemon};
 
 use std::sync::Arc;
 
