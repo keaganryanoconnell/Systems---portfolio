@@ -11,6 +11,8 @@ import ProjectWorkspace from "./components/ProjectWorkspace";
 import TelemetryChart from "./components/TelemetryChart";
 import Forum from "./components/Forum";
 import DeepDives from "./components/DeepDives";
+import ShaderTransition from "./components/ShaderTransition";
+import LiveWidgets from "./components/LiveWidgets";
 import { About, Footer } from "./components/AboutFooter";
 
 const MAX_HISTORY = 45;
@@ -101,6 +103,7 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
+      <ShaderTransition />
       <NavBar />
       <ErrorBoundary>
         <Hero />
@@ -119,6 +122,7 @@ export default function Portfolio() {
         />
 
         <DeepDives />
+        <LiveWidgets />
         <Forum />
         <About />
         <Footer />

@@ -1,13 +1,14 @@
 "use client";
 
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
+import dynamic from "next/dynamic";
+
+const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 
 export default function Hero() {
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
-      <div className="absolute inset-0 bg-bg">
-        <div className="absolute inset-0 opacity-[0.03] grid-bg" />
-      </div>
+      <HeroCanvas />
 
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-blue/5 blur-[120px]" />
       <div className="absolute bottom-1/4 right-1/4 w-[400px] h-[200px] rounded-full bg-gold/5 blur-[100px]" />

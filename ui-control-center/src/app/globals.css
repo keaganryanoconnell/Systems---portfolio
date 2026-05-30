@@ -211,3 +211,17 @@ a:hover { color: #79b8ff; }
 }
 .animate-blink { animation: blink 1s step-end infinite; }
 
+/* ── Custom Cursor ── */
+@media (hover: hover) and (pointer: fine) {
+  html.custom-cursor,
+  html.custom-cursor * {
+    cursor: none !important;
+  }
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #090c10; }
+::-webkit-scrollbar-thumb { background: #252a36; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #303745; }
+
