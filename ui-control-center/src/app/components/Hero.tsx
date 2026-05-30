@@ -8,6 +8,13 @@ const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 export default function Hero() {
   return (
     <section id="hero" className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      {/* WebGL fallback — shown until canvas loads, hidden by canvas opacity transition */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#090c10] via-[#0d1220] to-[#090c10]">
+        <div className="absolute inset-0 opacity-[0.03] grid-bg" />
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-gradient-radial from-blue/8 to-transparent" />
+        <div className="absolute bottom-1/3 right-1/4 w-[500px] h-[300px] rounded-full bg-gradient-radial from-gold/6 to-transparent" />
+      </div>
+
       <HeroCanvas />
 
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] rounded-full bg-blue/5 blur-[120px]" />

@@ -103,30 +103,31 @@ export default function Portfolio() {
 
   return (
     <div className="min-h-screen bg-bg text-text">
-      <ShaderTransition />
-      <NavBar />
-      <ErrorBoundary>
-        <Hero />
+      <ShaderTransition>
+        <NavBar />
+        <ErrorBoundary>
+          <Hero />
 
-        <section id="metrics" className="section py-12">
-          {telemetryDemo}
-        </section>
+          <section id="metrics" className="section py-12">
+            {telemetryDemo}
+          </section>
 
-        <ArchMap />
+          <ArchMap />
 
-        <ProjectWorkspace
-          chaosMode={chaosMode}
-          setChaosMode={setChaosMode}
-          nodes={nodes}
-          history={history}
-        />
+          <ProjectWorkspace
+            chaosMode={chaosMode}
+            setChaosMode={setChaosMode}
+            nodes={nodes}
+            history={history}
+          />
 
-        <DeepDives />
-        <LiveWidgets />
-        <Forum />
-        <About />
-        <Footer />
-      </ErrorBoundary>
+          <DeepDives />
+          <LiveWidgets />
+          <Forum />
+          <About />
+          <Footer />
+        </ErrorBoundary>
+      </ShaderTransition>
     </div>
   );
 }

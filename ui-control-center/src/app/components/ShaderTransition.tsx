@@ -1,12 +1,26 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, createContext, useContext, type ReactNode } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { transitionVert, transitionFrag } from "../../shaders/transitions/dissolve";
 
 type TransitionPhase = "idle" | "capture" | "animate" | "done";
 
-export default function ShaderTransition() {
+interface TransitionContextValue {
+  navigateWithTransition: (path: string) => void;
+  isTransitioning: boolean;
+}
+
+export const TransitionContext = createContext<TransitionContextValue>({
+  navigateWithTransition: () => {},
+  isTransitioning: false,
+});
+
+export function useTransition() {
+  return useContext(TransitionContext);
+}
+
+export default function ShaderTransition({ children }: { children?: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
   const [phase, setPhase] = useState<TransitionPhase>("idle");
@@ -15,19 +29,15 @@ export default function ShaderTransition() {
   const progRef = useRef(0);
   const rafRef = useRef(0);
   const startTimeRef = useRef(0);
-  const prevPathRef = useRef(pathname);
 
   const DURATION = 600;
 
-  useEffect(() => {
-    if (pathname !== prevPathRef.current && targetPath === null) {
-      // Path changed externally (browser back/forward)
-      prevPathRef.current = pathname;
-    }
-  }, [pathname, targetPath]);
-
-  const navigateTo = useCallback((path: string) => {
+  const navigateWithTransition = useCallback((path: string) => {
     if (phase !== "idle") return;
+
+    // If already on the target page, don't transition
+    if (window.location.pathname === path) return;
+
     setTargetPath(path);
     setPhase("capture");
 
@@ -47,7 +57,14 @@ export default function ShaderTransition() {
     container.appendChild(canvas);
 
     const gl = canvas.getContext("webgl2") || canvas.getContext("webgl");
-    if (!gl) return;
+    if (!gl) {
+      // Fallback: navigate immediately if no WebGL
+      canvas.remove();
+      router.push(path);
+      setPhase("idle");
+      setTargetPath(null);
+      return;
+    }
 
     const vertShader = gl.createShader(gl.VERTEX_SHADER)!;
     gl.shaderSource(vertShader, transitionVert);
@@ -90,7 +107,6 @@ export default function ShaderTransition() {
       if (progRef.current < 1) {
         rafRef.current = requestAnimationFrame(animate);
       } else {
-        // Transition complete
         canvas.remove();
         gl.deleteProgram(program);
         gl.deleteShader(vertShader);
@@ -106,5 +122,12 @@ export default function ShaderTransition() {
     rafRef.current = requestAnimationFrame(animate);
   }, [phase, router]);
 
-  return <div ref={containerRef} />;
+  return (
+    <TransitionContext.Provider
+      value={{ navigateWithTransition, isTransitioning: phase !== "idle" }}
+    >
+      <div ref={containerRef} />
+      {children}
+    </TransitionContext.Provider>
+  );
 }

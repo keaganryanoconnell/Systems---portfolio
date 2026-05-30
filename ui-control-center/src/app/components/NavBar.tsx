@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Home, Network, Container, MessageSquare, BookOpen, User, Rocket } from "lucide-react";
+import { useTransition } from "./ShaderTransition";
 
 const SECTIONS = [
   { id: "hero",      label: "Home",         icon: Home },
@@ -16,6 +17,7 @@ export default function NavBar() {
   const [active, setActive] = useState("hero");
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { navigateWithTransition } = useTransition();
 
   useEffect(() => {
     const onScroll = () => {
@@ -68,12 +70,12 @@ export default function NavBar() {
               {label.toUpperCase()}
             </button>
           ))}
-          <a
-            href="/capstone"
+          <button
+            onClick={() => navigateWithTransition("/capstone")}
             className="px-3 py-1.5 text-[11px] font-mono font-semibold tracking-wider rounded transition-all text-gold bg-gold-bg border border-gold-border flex items-center gap-1.5 ml-2"
           >
             <Rocket size={12} /> CAPSTONE
-          </a>
+          </button>
         </div>
 
         <button
