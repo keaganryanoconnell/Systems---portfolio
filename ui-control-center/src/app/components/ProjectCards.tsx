@@ -110,6 +110,7 @@ export default function ProjectCards({ onSelect }: { onSelect: (id: string) => v
           <button
             key={p.id}
             onClick={() => { setSelected(selected===p.id?null:p.id); onSelect(p.id); }}
+            data-magnetic
             className={`w-full text-left p-3 rounded border transition-all ${
               selected===p.id ? "bg-bg border-border-hover" : "bg-bg/30 border-border/30 hover:border-border/50"
             }`}

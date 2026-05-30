@@ -1,6 +1,7 @@
 "use client";
 
-import { Activity, Cpu, HardDrive, Layers, Wifi, Zap, Radio } from "lucide-react";
+import { Activity, Cpu, HardDrive, Layers, Wifi, Zap, Radio, ArrowLeft } from "lucide-react";
+import { useTransition } from "./ShaderTransition";
 
 export default function CapstoneHeader({
   fps, heapUsed, heapMax, workers, peerCount, uptime,
@@ -15,10 +16,19 @@ export default function CapstoneHeader({
 }) {
   const heapPct = Math.min(100, (heapUsed / heapMax) * 100);
   const activeWorkers = workers.filter(w => w !== "IDLE").length;
+  const { navigateWithTransition } = useTransition();
 
   return (
     <header className="h-14 flex items-center justify-between px-5 bg-surface border-b border-border shrink-0">
       <div className="flex items-center gap-4">
+        <button
+          onClick={() => navigateWithTransition("/")}
+          className="flex items-center gap-1.5 text-[9px] font-mono text-text-muted hover:text-gold transition-colors"
+          title="Back to Portfolio"
+        >
+          <ArrowLeft size={12} />
+          <span className="hidden sm:inline">PORTFOLIO</span>
+        </button>
         <span className="text-gold font-mono text-sm font-bold">◈</span>
         <h1 className="text-xs font-mono font-black tracking-tight text-text">
           SPATIAL<span className="text-text-soft">_ANALYTICS_ENGINE</span>

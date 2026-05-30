@@ -2,6 +2,7 @@
 
 import { ArrowDown, Github, Linkedin, Mail } from "lucide-react";
 import dynamic from "next/dynamic";
+import Magnetic from "./Magnetic";
 
 const HeroCanvas = dynamic(() => import("./HeroCanvas"), { ssr: false });
 
@@ -37,22 +38,30 @@ export default function Hero() {
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 mb-16">
-          <a
-            href="#container"
-            className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-bg font-mono text-xs font-bold tracking-wider rounded-md hover:bg-gold/90 transition-colors"
-          >
-            View Projects <ArrowDown size={14} />
-          </a>
+          <Magnetic>
+            <a
+              href="#container"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-gold text-bg font-mono text-xs font-bold tracking-wider rounded-md hover:bg-gold/90 transition-colors"
+            >
+              View Projects <ArrowDown size={14} />
+            </a>
+          </Magnetic>
           <div className="flex items-center gap-3">
-            <a href="https://github.com/keaganryanoconnell" target="_blank" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-border-hover transition-all" title="GitHub">
-              <Github size={18} />
-            </a>
-            <a href="https://linkedin.com/in/keaganryanoconnell" target="_blank" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-text-soft transition-all" title="LinkedIn">
-              <Linkedin size={18} />
-            </a>
-            <a href="mailto:keaganryanoconnell@gmail.com" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-text-soft transition-all" title="Email">
-              <Mail size={18} />
-            </a>
+            <Magnetic>
+              <a href="https://github.com/keaganryanoconnell" target="_blank" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-border-hover transition-all" title="GitHub">
+                <Github size={18} />
+              </a>
+            </Magnetic>
+            <Magnetic>
+              <a href="https://linkedin.com/in/keaganryanoconnell" target="_blank" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-text-soft transition-all" title="LinkedIn">
+                <Linkedin size={18} />
+              </a>
+            </Magnetic>
+            <Magnetic>
+              <a href="mailto:keaganryanoconnell@gmail.com" className="p-2.5 rounded-md border border-border text-text-soft hover:text-text hover:border-text-soft transition-all" title="Email">
+                <Mail size={18} />
+              </a>
+            </Magnetic>
           </div>
         </div>
 
